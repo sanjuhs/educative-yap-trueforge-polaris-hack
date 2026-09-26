@@ -34,3 +34,19 @@ python deployment/decrypt-hosted-config.py \
 ```
 
 The output must not already exist. Store recovered configuration in a secret manager; never add it to a source checkout. Future credential rotations require updating this recovery snapshot.
+
+## Hosted release snapshot
+
+The private repository's `hosted-demo-2026-09-26` release contains `educative-yap-hosted-2026-09-26.tar.gz.aes` and its own `manifest.json`. It uses the same separately retained recovery key. Verify or extract with `restore-runtime-backup.py` as above, substituting these release files.
+
+Extraction produces `.data/hosted-recovery/` with:
+
+- `postgres.dump`: a custom-format dump of the dedicated Yap database.
+- `trueforge.sqlite`: a consistent SQLite online backup, checked with `integrity_check`.
+- `working-data.tar.gz`: the cloud working volume, including that consistent SQLite snapshot; transient logs, journals and reinstallable models are excluded.
+- `r2-objects/`: the raw encrypted object bodies and metadata manifest for the Yap-only prefix. Preserve object keys, bytes and custom metadata when restoring to R2.
+- `hosted-config.json`: private configuration, including the R2 encryption key. Never print or commit this file.
+
+Restore into an isolated deployment first. Stop its workers, restore the database with PostgreSQL's `pg_restore`, extract the working archive into its empty data volume with the runtime user's ownership, restore the R2 bodies and corresponding metadata, and inject the private configuration. Keep the R2 prefix and encryption key unchanged. Start one worker and verify owner login, historical playback, an uploaded asset and a short new generation before directing users to it. Do not restore over a running shared database or Make My Reels resources.
+
+The archive's authentication and member paths are verified by the restore tool. This snapshot is a recovery checkpoint; a full infrastructure disaster-recovery rehearsal and scheduled daily backups remain operational follow-ups.

@@ -115,17 +115,19 @@ flowchart TB
   U[Creator browser] --> W[Vercel studio + same-origin gateway]
   W --> API[Authenticated Yap API on VPS]
   API --> DB[(Yap Postgres)]
-  API --> R2[(Private Yap R2 storage)]
+  API --> R2[(Encrypted Yap R2 objects)]
   API --> Q[Durable generation jobs]
   Q --> TF[Private TrueForge orchestrator]
   TF --> MCP[Owner-scoped Yap MCP tools]
   MCP --> MW[Trusted Modal adapter]
   MW --> SB[Disposable generated-code sandbox]
   SB --> MW
-  MW --> R2
+  MW --> API
 ```
 
 **Hosted implementation:** authenticated accounts, owner-created users, Postgres history, durable jobs, encrypted R2 media and a persistent TrueForge volume. Deployment verification is recorded in [hosting](deployment/hosting.md). Vercel serves the web experience; long-running agent and media work belongs in the backend/workers. Modal is integrated explicitly through Yap's tools/adapter, not represented as a built-in TrueForge sandbox provider. Never expose the local unauthenticated TrueForge interface publicly. [Hosted environment example](deployment/hosted.env.example) · [R2, deployment and recovery guide](deployment/hosting.md) · [Isolated renderer](deployment/modal-renderer.md) · [Encrypted backup restore](deployment/runtime-backup.md).
+
+**Verified live on September 26, 2026:** a screenshot upload became a 9.4-second Astra/high explainer with narration and captions, rendered on Modal and played from encrypted R2. Its recorded AI estimate was **$1.04**, excluding hosting, storage and rendering compute. Twelve earlier projects were imported; all thirteen projects remained available after a backend restart. The one-minute Korean War video retained playback, credits and recorded cost history. A 12 MB personal video clip also uploaded successfully through the public studio. [Release evidence and limits](deployment/demo-verification.md).
 
 Future community, collaboration and mobile concepts are preserved in [product concepts](docs/product-concepts.md); they are not prerequisites for the creator studio or claims of shipped features.
 

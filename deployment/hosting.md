@@ -67,11 +67,13 @@ A dedicated private bucket is the preferred operational setup:
 1. In the intended Cloudflare account, create `educative-yap-private` (or another unique Yap bucket).
 2. Keep the public `r2.dev` URL disabled. Do not attach a public custom domain.
 3. Create an R2 Object Read & Write credential scoped only to that bucket. Bucket administration is a separate permission from object access.
-4. Set the four R2 connection variables in the Yap backend’s runtime secrets. Keep the existing `R2_ENCRYPTION_KEY` when migrating existing encrypted objects.
-5. Copy the entire Yap object prefix to the new bucket without modifying object bytes, keys, or custom metadata (the encryption nonce and authentication tag). Preserve the original source until restored playback and asset reuse are verified.
+4. Copy the entire Yap object prefix to the new bucket without modifying object bytes, keys, or custom metadata (the encryption nonce and authentication tag). Preserve the original source until restored playback and asset reuse are verified. Pause new generations/uploads during the final copy so no new objects are missed.
+5. Set the four R2 connection variables in the Yap backend’s runtime secrets. Keep the existing `R2_ENCRYPTION_KEY` and `R2_PREFIX` when migrating existing encrypted objects.
 6. Deploy, sign in, open an existing video, and verify playback and download. Test that signed-out and other-user requests cannot retrieve the project or media.
 
 Changing `R2_BUCKET` alone does not move existing objects. Retain the same prefix and encryption key during migration. New installations can start directly with a dedicated bucket.
+
+Cloudflare documents the [S3 endpoint configuration](https://developers.cloudflare.com/r2/get-started/s3/) and [bucket-scoped R2 API credentials](https://developers.cloudflare.com/r2/api/tokens/). These credentials belong only in the backend secret configuration, never in the browser or a source commit.
 
 ## Frontend deployment
 
