@@ -60,9 +60,11 @@ Login creates an opaque, HttpOnly, Secure cookie. Mutating requests also require
 
 ## R2 privacy and a dedicated bucket
 
+The live deployment uses the dedicated `educative-yap-private` bucket with bucket-scoped Object Read & Write credentials. Its public development URL is disabled and no public custom domain is attached. The September 26 migration preserved the Yap prefix, AES-GCM encryption key, object bytes and custom metadata; the source copies remain available for rollback. The application still serves media through authenticated ownership checks.
+
 The credentials available during initial deployment could access objects in the existing storage bucket but could not create a new bucket or inspect its public-domain settings through the Cloudflare control API. The implementation therefore encrypts Yap object bytes with AES-256-GCM before writing them, uses a separate prefix, and serves decrypted media only through backend ownership checks. It does not assume the shared bucket is private, and it does not change another application’s domains or access settings.
 
-A dedicated private bucket is the preferred operational setup:
+For another installation or a future bucket migration:
 
 1. In the intended Cloudflare account, create `educative-yap-private` (or another unique Yap bucket).
 2. Keep the public `r2.dev` URL disabled. Do not attach a public custom domain.
