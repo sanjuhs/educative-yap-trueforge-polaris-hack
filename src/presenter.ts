@@ -14,6 +14,7 @@ export type PresenterAsset = {
   transcript: string;
   segments: Caption[];
   captions: Caption[];
+  transcriptionEstimateUsd?: number;
 };
 export function presenterDir(id: string) {
   if (!/^[a-f0-9-]{36}$/.test(id))
@@ -57,6 +58,8 @@ export async function preparePresenter(
       "-y",
       "-i",
       voiceFile || videoFile,
+      "-map",
+      "0:a:0",
       "-vn",
       "-t",
       String(duration),
@@ -75,6 +78,8 @@ export async function preparePresenter(
       "-y",
       "-i",
       voiceFile || videoFile,
+      "-map",
+      "0:a:0",
       "-vn",
       "-t",
       String(duration),
@@ -125,6 +130,7 @@ export async function preparePresenter(
       transcript: transcript.text,
       segments,
       captions,
+      transcriptionEstimateUsd: (Math.ceil(duration) / 60) * 0.006,
     };
     await fs.writeFile(
       path.join(dir, "asset.json"),
@@ -162,6 +168,19 @@ export function presenterTimeline(
   }));
 }
 export async function combinePresenter(dir: string, asset: PresenterAsset) {
+  const source = await probe(
+    path.join(presenterDir(asset.id), "original-video"),
+  );
+  const video = source.streams.find((s: any) => s.codec_type === "video");
+  const hdr = ["arib-std-b67", "smpte2084"].includes(video?.color_transfer);
+  const tone = hdr
+    ? "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p,"
+    : "";
+  // A modest portrait zoom keeps the whole face visible; blurred sides fill the panel.
+  const framing =
+    Number(video?.height) > Number(video?.width)
+      ? `[1:v]${tone}split[bg][fg];[bg]scale=1080:840:force_original_aspect_ratio=increase,crop=1080:840,boxblur=35:2[blur];[fg]scale=-2:1120,crop=iw:840:0:(ih-oh)*0.28[face];[blur][face]overlay=(W-w)/2:0,setsar=1,fps=30,setpts=PTS-STARTPTS[bottom]`
+      : `[1:v]${tone}scale=1080:840:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=1080:840:(ow-iw)/2:(oh-ih)/2:color=0x121718,setsar=1,fps=30,setpts=PTS-STARTPTS[bottom]`;
   await run("ffmpeg", [
     "-v",
     "error",
@@ -173,7 +192,7 @@ export async function combinePresenter(dir: string, asset: PresenterAsset) {
     "-i",
     path.join(presenterDir(asset.id), "voice.wav"),
     "-filter_complex",
-    "[0:v]crop=1080:1080:0:0,setsar=1,setpts=PTS-STARTPTS[top];[1:v]scale=1080:840:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=1080:840:(ow-iw)/2:(oh-ih)/2:color=0x121718,setsar=1,fps=30,setpts=PTS-STARTPTS[bottom];[top][bottom]vstack=inputs=2[v]",
+    `[0:v]crop=1080:1080:0:0,setsar=1,setpts=PTS-STARTPTS[top];${framing};[top][bottom]vstack=inputs=2[v]`,
     "-map",
     "[v]",
     "-map",

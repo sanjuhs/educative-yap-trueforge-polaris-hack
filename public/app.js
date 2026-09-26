@@ -36,6 +36,7 @@ function activity(text, error = false) {
 }
 function show(p) {
   selectedId = p.id;
+  showUsage(p.usage);
   const signature = `${p.id}:${p.status}:${p.progress}`;
   if (signature === lastPreview) return;
   lastPreview = signature;
@@ -99,6 +100,8 @@ async function tick() {
       ? "● TRUEFORGE CONNECTED"
       : "STARTING…";
     $("#forge-link").href = health.forgeUrl;
+    $("#model-info").textContent =
+      `${health.model} · ${health.reasoning} reasoning · Directed through TrueForge`;
     projects = await api("/api/projects");
     renderLibrary();
     if (activeTurn) {
@@ -223,3 +226,15 @@ $("#video-mode").onchange = () => {
   sessionId = undefined;
   sessionStorage.removeItem("yap-session");
 };
+
+function showUsage(u) {
+  const panel = $("#usage-panel");
+  if (!u?.metrics) {
+    panel.textContent =
+      "AI usage appears after the director finishes. Older projects were not metered.";
+    return;
+  }
+  const m = u.metrics,
+    money = (v) => (v === undefined ? "Unavailable" : `$${v.toFixed(4)}`);
+  panel.innerHTML = `<strong>AI cost estimate · ${money(u.estimatedUsd)}</strong><p>${safe(u.model)} · ${safe(u.reasoning)} reasoning</p><dl><dt>Input tokens</dt><dd>${m.total_input_tokens.toLocaleString()}</dd><dt>Output tokens (includes reasoning)</dt><dd>${m.total_output_tokens.toLocaleString()}</dd><dt>Cached input (included above)</dt><dd>${(m.total_cache_read_tokens || 0).toLocaleString()}</dd><dt>Cache writes (included in input)</dt><dd>${(m.total_cache_write_tokens || 0).toLocaleString()}</dd><dt>Reasoning tokens (included above)</dt><dd>${(m.total_reasoning_tokens || 0).toLocaleString()}</dd><dt>Director · ${u.modelCalls} model calls</dt><dd>${money(u.modelEstimateUsd)}</dd><dt>Audio estimate</dt><dd>${money(u.audioEstimateUsd)}</dd><dt>Net caching discount (after writes)</dt><dd>${money(u.cacheDiscountUsd)}</dd></dl><p>${safe(u.audioBasis)}. ${safe(u.imageAsset || "")}.</p><p>Rendering and status checks make 0 additional model calls.</p><details><summary>How this estimate works</summary><p>Measured TrueForge turn tokens × standard OpenAI prices, ${safe(u.pricingDate)}. ${u.sharedTurn ? "Director cost is shared across multiple outputs from this turn; total is not allocated." : "Includes this generation turn, not previous revisions."} ${safe(u.error || "")}</p><p>Excludes: ${safe(u.exclusions)}</p><a href="${safe(u.pricingSource)}" target="_blank" rel="noreferrer">Pricing source ↗</a></details>`;
+}

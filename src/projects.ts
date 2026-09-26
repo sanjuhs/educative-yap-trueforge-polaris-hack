@@ -1,3 +1,4 @@
+import { projectUsage } from "./usage.js";
 import {
   getPresenter,
   presenterTimeline,
@@ -62,6 +63,7 @@ export function getProject(id: string) {
 export function publicProject(p: Project) {
   return {
     ...p,
+    usage: projectUsage(p),
     videoUrl:
       p.status === "complete"
         ? `${studioUrl}/media/${p.id}/video.mp4`
@@ -137,7 +139,7 @@ function ambient(duration: number) {
   }
   return bytes;
 }
-async function renderProject(p: Project) {
+export async function renderProject(p: Project) {
   const dir = projectDir(p.id),
     client = new OpenAI({
       apiKey: config.apiKey,
@@ -149,6 +151,7 @@ async function renderProject(p: Project) {
   const presenter = p.plan.presenterAssetId
     ? await getPresenter(p.plan.presenterAssetId)
     : undefined;
+  p.audioModel = presenter ? "whisper-1" : config.ttsModel;
   const scenes: TimedScene[] = presenter
     ? presenterTimeline(p.plan, presenter)
     : [];
@@ -185,6 +188,11 @@ async function renderProject(p: Project) {
     path.join(config.root, "node_modules/gsap/dist/gsap.min.js"),
     path.join(dir, "gsap.min.js"),
   );
+  if (scenes.some((s) => ["web", "photo"].includes(s.visual)))
+    await fs.copyFile(
+      path.join(config.root, "assets/cafe.png"),
+      path.join(dir, "cafe.png"),
+    );
   await fs.writeFile(
     path.join(dir, "index.html"),
     composition(p.plan, scenes, cursor, presenter?.captions),

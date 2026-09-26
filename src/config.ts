@@ -6,7 +6,8 @@ export const config = {
   projects: path.resolve(".data/projects"),
   port: Number(process.env.STUDIO_PORT || 8789),
   forgePort: Number(process.env.PORT || 8790),
-  model: process.env.OPENAI_MODEL || "gpt-5.4",
+  model: process.env.OPENAI_MODEL || "gpt-6-astra",
+  reasoning: process.env.OPENAI_REASONING_EFFORT || "high",
   ttsModel: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
   apiKey: process.env.OPENAI_API_KEY || "",
 };

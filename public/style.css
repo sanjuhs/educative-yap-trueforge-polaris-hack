@@ -475,3 +475,31 @@ footer {
 #presenter-inputs p {
   line-height: 1.6;
 }
+
+.usage-panel {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 20px;
+  border-top: 1px solid #cccdbb;
+  padding-top: 16px;
+  color: #566252;
+}
+.usage-panel strong {
+  font-size: 16px;
+  color: #263c2a;
+}
+.usage-panel dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 14px;
+}
+.usage-panel dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.usage-panel p {
+  margin: 8px 0;
+}
+.usage-panel summary {
+  cursor: pointer;
+}

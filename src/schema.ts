@@ -15,8 +15,30 @@ export const sceneSchema = z.object({
     .max(450)
     .describe("Natural spoken narration, 12–25 words per scene"),
   visual: z
-    .enum(["orbit", "comparison", "steps", "bars", "statement"])
+    .enum(["orbit", "comparison", "steps", "bars", "statement", "web", "photo"])
     .describe("Choose a visual that explains the idea"),
+  webStage: z
+    .enum([
+      "overview",
+      "markup",
+      "render",
+      "style",
+      "selector",
+      "link",
+      "delivery",
+    ])
+    .optional(),
+  visualIntent: z
+    .string()
+    .max(240)
+    .optional()
+    .describe(
+      "What this visual helps the viewer understand; describe the change they see",
+    ),
+  photoAsset: z
+    .enum(["cafe"])
+    .optional()
+    .describe("Bundled cafe photograph; only use when relevant"),
   labels: z
     .array(z.string().min(1).max(40))
     .min(1)
@@ -45,7 +67,7 @@ export const planSchema = z
       .boolean()
       .default(true)
       .describe("Add a quiet original synthesized ambient bed"),
-    scenes: z.array(sceneSchema).min(3).max(6),
+    scenes: z.array(sceneSchema).min(3).max(10),
   })
   .superRefine((plan, ctx) => {
     const words = plan.scenes.reduce(
@@ -58,6 +80,18 @@ export const planSchema = z
         message: "Keep the whole script at 135 words or fewer.",
       });
     plan.scenes.forEach((s, i) => {
+      if (s.visual === "web" && !s.webStage)
+        ctx.addIssue({
+          code: "custom",
+          path: ["scenes", i, "webStage"],
+          message: "Web scenes require a webStage",
+        });
+      if (s.visual === "photo" && !s.photoAsset)
+        ctx.addIssue({
+          code: "custom",
+          path: ["scenes", i, "photoAsset"],
+          message: "Photo scenes require a photoAsset",
+        });
       if (s.visual === "comparison" && s.labels.length !== 2)
         ctx.addIssue({
           code: "custom",
@@ -87,6 +121,7 @@ export type Project = {
   scenes?: TimedScene[];
   duration?: number;
   error?: string;
+  audioModel?: string;
 };
 export function escapeHtml(value: string) {
   return value.replace(

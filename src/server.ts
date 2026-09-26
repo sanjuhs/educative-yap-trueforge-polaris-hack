@@ -1,3 +1,4 @@
+import { watchUsage, restoreUsage } from "./usage.js";
 import multer from "multer";
 import fs from "node:fs/promises";
 import { preparePresenter, getPresenter } from "./presenter.js";
@@ -89,7 +90,12 @@ export async function startServer() {
   });
   app.use(express.json({ limit: "128kb" }));
   app.get("/api/health", (_req, res) =>
-    res.json({ ready, forgeUrl, model: config.model }),
+    res.json({
+      ready,
+      forgeUrl,
+      model: config.model,
+      reasoning: config.reasoning,
+    }),
   );
   app.post("/mcp", async (req, res) => {
     const server = makeMcp(),
@@ -174,6 +180,7 @@ export async function startServer() {
         stream: false,
       },
     );
+    await watchUsage(session.data.id, turn.data.id);
     res.json({ sessionId: session.data.id, turnId: turn.data.id });
   });
   app.get("/api/turns/:session/:turn", async (req, res) => {
@@ -187,7 +194,7 @@ export async function startServer() {
   });
   app.get("/media/:id/:file", async (req, res) => {
     if (
-      !/^(video\.mp4|poster\.jpg|index\.html|storyboard\.json|gsap\.min\.js|voice-\d\.wav)$/.test(
+      !/^(cafe\.png|video\.mp4|poster\.jpg|index\.html|storyboard\.json|gsap\.min\.js|voice-\d\.wav)$/.test(
         req.params.file,
       )
     ) {
@@ -232,6 +239,7 @@ export async function startServer() {
   return {
     http,
     setReady: () => {
+      void restoreUsage();
       ready = true;
     },
   };

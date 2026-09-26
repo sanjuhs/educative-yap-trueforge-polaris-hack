@@ -74,18 +74,31 @@ unclear speech. Animated explainers still use approximate phrase timing.
 Visuals use controlled templates. Arbitrary generated scene code and
 Remotion/Manim adapters are future iterations. Outputs are limited to 60 seconds.
 
+## Visual direction and per-video costs
+
+The director now defaults to **GPT-6 Astra with high reasoning**, orchestrated by
+TrueForge. HTML/CSS explainers can use animated browser demonstrations, a bundled
+photographic asset, and multiple visual changes within each scene. The studio
+shows measured token usage and estimated API cost after each generation turn.
+
+See [visuals and cost accounting](docs/visuals-and-costs.md) for supported scenes,
+pricing assumptions, cache-write accounting, and exclusions. Rendering itself
+uses no further model calls. HDR iPhone uploads require an FFmpeg build with
+`zscale` and `tonemap` filters (the Homebrew build used here supports both).
+
 ## Configuration
 
 Both `example.env` and `.env.example` contain placeholders only. `.env`, local
 TrueForge credentials, generated media, and logs are excluded from Git.
 
-| Variable           | Default           | Purpose                                 |
-| ------------------ | ----------------- | --------------------------------------- |
-| `OPENAI_API_KEY`   | required          | TrueForge planning and voice generation |
-| `OPENAI_MODEL`     | `gpt-5.4`         | Director model; must support tool calls |
-| `OPENAI_TTS_MODEL` | `gpt-4o-mini-tts` | Narration model                         |
-| `STUDIO_PORT`      | `8789`            | Studio and local MCP endpoint           |
-| `PORT`             | `8790`            | TrueForge interface and API             |
+| Variable                  | Default           | Purpose                                 |
+| ------------------------- | ----------------- | --------------------------------------- |
+| `OPENAI_API_KEY`          | required          | TrueForge planning and voice generation |
+| `OPENAI_MODEL`            | `gpt-6-astra`     | Director model; must support tool calls |
+| `OPENAI_REASONING_EFFORT` | `high`            | Director reasoning effort               |
+| `OPENAI_TTS_MODEL`        | `gpt-4o-mini-tts` | Narration model                         |
+| `STUDIO_PORT`             | `8789`            | Studio and local MCP endpoint           |
+| `PORT`                    | `8790`            | TrueForge interface and API             |
 
 Restart after changing configuration. The launcher updates this project's
 provider key, model, agent instructions, and MCP endpoint automatically. Both
