@@ -19,7 +19,29 @@
   <!-- 1 Discover -->
   <g transform="translate(48 196)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
     <rect width="390" height="830" rx="46" fill="#18251f" filter="url(#shadow)"/><rect x="9" y="9" width="372" height="812" rx="38" fill="#fffef9"/><rect x="143" y="10" width="104" height="21" rx="11" fill="#18251f"/>
-    <text x="30" y="55" fill="#1c2b24" font-size="12" font-weight="700">9:41</text><text x="29" y="105" fill="#1c2b24" font-size="28" font-weight="700" letter-spacing="-2">yap<tspan fill="#879d51">↗</tspan></text><text x="350" y="101" text-anchor="end" fill="#7a8777" font-size="9" letter-spacing="1">LEARN SOMETHING</text>
+    <text x="30" y="55" fill="#1c2b24" font-size="12" font-weight="700">9:41</text><!-- Yap artwork from public/brand/yap-logo.svg -->
+<svg x="25" y="67" width="100" height="57" viewBox="0 0 236 134" aria-label="Yap"><rect width="236" height="134" fill="#f6f5f0" />
+  <g fill="#1d2723">
+    <path
+      transform="translate(10.000 84) scale(.092 -.092)"
+      d="M130 -220L252 56L222 56L21 504L167 504L311 180L311 180L440 504L584 504L273 -220Z"
+    />
+    <path
+      transform="translate(50.842 84) scale(.092 -.092)"
+      d="M236 -12Q174 -12 133 8.5Q92 29 71.5 63.5Q51 98 51 140Q51 187 74.5 222Q98 257 146 276.5Q194 296 267 296L391 296Q391 334 381 358Q371 382 350 394Q329 406 294 406Q256 406 229.5 390Q203 374 197 339L66 339Q71 394 101.5 433Q132 472 182.5 494Q233 516 295 516Q366 516 418 492.5Q470 469 498 423.5Q526 378 526 313L526 0L413 0L398 77L398 77Q387 57 371.5 41Q356 25 335.5 13Q315 1 291 -5.5Q267 -12 236 -12ZM268 92Q294 92 314.5 101.5Q335 111 350 128Q365 145 374 166Q383 187 386 212L386 213L283 213Q251 213 231.5 205.5Q212 198 203 184Q194 170 194 152Q194 133 203 119.5Q212 106 229 99Q246 92 268 92Z"
+    />
+    <path
+      transform="translate(93.742 84) scale(.092 -.092)"
+      d="M66 -220L66 504L186 504L201 435L201 435Q216 456 238.5 474.5Q261 493 292 504.5Q323 516 362 516Q434 516 488 481Q542 446 573.5 386Q605 326 605 251Q605 175 573 115.5Q541 56 487 22Q433 -12 363 -12Q308 -12 267.5 8.5Q227 29 201 65L201 -220ZM332 106Q371 106 401.5 124Q432 142 449.5 174.5Q467 207 467 251Q467 294 449.5 327.5Q432 361 401.5 379.5Q371 398 332 398Q293 398 262.5 379.5Q232 361 215 328Q198 295 198 252Q198 208 215 175.5Q232 143 262.5 124.5Q293 106 332 106Z"
+    />
+  </g>
+  <path
+    d="M163 88 218 32m-17 2 17-2-2 17"
+    fill="none"
+    stroke="#879b50"
+    stroke-width="3.3"
+    stroke-linecap="square"
+  /></svg><text x="350" y="101" text-anchor="end" fill="#7a8777" font-size="9" letter-spacing="1">LEARN SOMETHING</text>
     <text x="28" y="151" fill="#1c2b24" font-family="Georgia, serif" font-size="26">A little wonder,</text><text x="28" y="181" fill="#6e8454" font-family="Georgia, serif" font-style="italic" font-size="26">every day.</text>
     <rect x="27" y="197" width="336" height="42" rx="13" fill="#f2f3ec" stroke="#e1e5dc"/><circle cx="47" cy="218" r="6" fill="none" stroke="#74806c" stroke-width="1.5"/><path d="m52 223 5 5" stroke="#74806c" stroke-width="1.5"/><text x="68" y="222" fill="#849082" font-size="11">Search ideas, topics, creators</text>
     <text x="29" y="267" fill="#778275" font-size="9" font-weight="700" letter-spacing="1.3">PICK A CURIOSITY</text>

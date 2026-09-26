@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://educative-yap.vercel.app"><img src="public/brand/yap-logo.png" alt="Yap — the explainer studio" width="236" height="134" /></a>
+<a href="https://educative-yap.vercel.app"><img src="public/brand/yap-logo.svg" alt="Yap — the explainer studio" width="236" height="134" /></a>
 
 # Big ideas. Little videos.
 
