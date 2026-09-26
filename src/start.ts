@@ -1,3 +1,4 @@
+import { importLegacyHistory } from "./hosted/legacy-import.js";
 import {
   initializeHosted,
   registerRenderHandler,
@@ -24,6 +25,7 @@ if (!config.apiKey || config.apiKey.includes("your-key"))
 await Promise.all([run("ffmpeg", ["-version"]), run("ffprobe", ["-version"])]);
 await fs.mkdir(config.data, { recursive: true });
 await initializeHosted();
+await importLegacyHistory();
 await restoreProjects();
 registerRenderHandler(async (id) => {
   const project = getProject(id);

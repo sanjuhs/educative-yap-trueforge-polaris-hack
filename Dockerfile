@@ -7,7 +7,7 @@ ENV NODE_ENV=production \
     STUDIO_PORT=8789 \
     PORT=8790
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ffmpeg python3 python3-venv ca-certificates curl gosu tini \
+      ffmpeg python3 python3-venv ca-certificates curl gosu tini build-essential \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 # tsx is the runtime launcher, so retain pinned development dependencies.

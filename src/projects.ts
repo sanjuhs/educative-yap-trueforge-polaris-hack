@@ -273,6 +273,7 @@ export async function renderProject(p: Project) {
       timeout: 90000,
     });
   p.status = "narrating";
+  delete p.error;
   await save(p);
   const presenter = p.plan.presenterAssetId
     ? await getPresenter(p.plan.presenterAssetId)
@@ -295,18 +296,46 @@ export async function renderProject(p: Project) {
         /* First attempt or interrupted audio write. */
       }
       if (!cached) {
-        const response = await client.audio.speech.create({
-          model: config.ttsModel,
-          voice: p.plan.voice,
-          input: s.narration,
-          instructions:
-            "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
-          response_format: "wav",
-        });
-        await fs.writeFile(
-          path.join(dir, audio),
-          Buffer.from(await response.arrayBuffer()),
-        );
+        const temporary = path.join(dir, audio + ".tmp.wav");
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const response = await client.audio.speech.create(
+              {
+                model: config.ttsModel,
+                voice: p.plan.voice,
+                input: s.narration,
+                instructions:
+                  "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
+                response_format: "wav",
+              },
+              { maxRetries: 0 },
+            );
+            const bytes = Buffer.from(await response.arrayBuffer());
+            if (bytes.length < 44)
+              throw new Error(
+                "The speech provider returned empty audio; retrying narration",
+              );
+            await fs.writeFile(temporary, bytes);
+            const info = await probe(temporary);
+            if (
+              !(Number(info.format.duration) > 0) ||
+              !info.streams.some((stream: any) => stream.codec_type === "audio")
+            )
+              throw new Error("The speech provider returned invalid audio");
+            await fs.rename(temporary, path.join(dir, audio));
+            lastError = undefined;
+            break;
+          } catch (error) {
+            lastError = error;
+            await fs.rm(temporary, { force: true });
+            if (attempt < 2)
+              await new Promise((resolve) =>
+                setTimeout(resolve, 500 * (attempt + 1)),
+              );
+          }
+        }
+        if (lastError) throw lastError;
       }
       const meta = await probe(path.join(dir, audio));
       const duration = Number(meta.format.duration) + 0.25;

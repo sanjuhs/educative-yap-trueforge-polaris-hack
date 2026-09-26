@@ -8,6 +8,7 @@ services:
       - "8789"
     environment:
       YAP_HOSTED: "true"
+      YAP_LEGACY_MANIFEST_KEY: ${YAP_LEGACY_MANIFEST_KEY:-}
       HOST: "0.0.0.0"
       STUDIO_PORT: "8789"
       PORT: "8790"
