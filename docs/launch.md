@@ -22,6 +22,8 @@ These are drafts for the maker to post. No Product Hunt submission or outreach h
 
 ## Three-minute judge walkthrough
 
+For the submission recording, use the [2:50 recording guide](submission-video.md): it reserves 45 seconds for actual TrueForge UI/API use and leaves ten seconds below the hard cap. The overview below is a presentation outline; a trace document alone should not substitute for that required footage.
+
 Have the saved Korean War project and the verified hosted screenshot project ready in an owner account. Use existing results for a dependable short demo; a fresh generation makes paid API calls and has variable latency.
 
 | Time      | Show                                                     | Say                                                                                                                                            |

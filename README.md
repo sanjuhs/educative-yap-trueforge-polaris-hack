@@ -17,6 +17,10 @@
 
 **Open source · Hosted preview is invite-only · Built for Agents That Act: TrueFoundry × Polaris**
 
+[Watch the demo (Google Drive)](https://drive.google.com/file/d/1Ofqhci3xFfUWFRKICFW5t_VyA4NEGtux/view) · [Download demo MP4](https://github.com/sanjuhs/educative-yap-trueforge-polaris-hack/raw/refs/heads/main/docs/demo/yap-demo.mp4) · [Submission writeup (one-page PDF)](solution-writeup.pdf)
+
+Demo: **2:51.6**, with narration and an extended walkthrough of actual TrueForge sessions and tool calls. The 1920×1080 MP4 was upscaled from a 1280×720 OBS recording. [Recording details](docs/demo/README.md).
+
 </div>
 
 ## From an idea to a finished explanation
