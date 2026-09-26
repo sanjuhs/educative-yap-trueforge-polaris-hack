@@ -77,6 +77,12 @@ Cloudflare documents the [S3 endpoint configuration](https://developers.cloudfla
 
 ## Frontend deployment
 
+The existing Vercel project `educative-yap` is connected directly to the GitHub repository `sanjuhs/educative-yap-trueforge-polaris-hack`. Pushes to `main` automatically build and publish the frontend; other branches receive preview deployments. The project root is `web`, with files outside that root included so `build.mjs` can copy the canonical `public/` directory. The install command is `true` (no frontend dependencies), the build command is `node build.mjs`, and Node 22 runs the build. Generated Build Output API files contain only the studio assets and API/media proxy routes.
+
+This Git integration deploys only Vercel. Backend releases still require updating the pinned Coolify service revision and redeploying it. Preview builds keep production authentication settings; a separate backend/allowed origin is required for authenticated preview testing.
+
+For a manual recovery deployment, use the prebuilt flow below.
+
 Use the prebuilt flow to keep rendering dependencies and secrets out of Vercel:
 
 ```sh
