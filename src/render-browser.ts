@@ -195,6 +195,8 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
           el = document.getElementById("host-captions")!;
         el.textContent = caption?.text || "";
         el.style.display = caption ? "block" : "none";
+        const credits = document.getElementById("host-image-credits");
+        el.style.bottom = `${credits ? Math.max(90, 1920 - credits.getBoundingClientRect().top + 20) : 90}px`;
       },
       {
         time,
