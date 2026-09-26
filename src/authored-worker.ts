@@ -44,7 +44,7 @@ try {
         times,
         blocked,
         notes:
-          "Preview uses actual presenter timings, or estimated 6s/scene for TTS. Background frames shown; cutout is composited during export.",
+          "Preview uses actual presenter timings, or narration-weighted target timings for TTS. Background frames shown; cutout is composited during export.",
       }),
     );
   } else {
