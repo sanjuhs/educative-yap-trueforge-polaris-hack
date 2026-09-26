@@ -1,0 +1,32 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+!example.env
+*.pem
+*.key
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+__pycache__/
+
+# Local sessions, uploads, and generated media
+.trueforge/
+.data/
+data/
+uploads/
+outputs/
+renders/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.log
+
+# OS/editor files
+.DS_Store
+.idea/
