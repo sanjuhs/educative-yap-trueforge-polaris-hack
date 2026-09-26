@@ -37,6 +37,9 @@ const forge = spawn(
       PORT: String(config.forgePort),
       SQLITE_PATH: path.join(config.data, "trueforge.sqlite"),
       STANDALONE: "true",
+      // Sourcing and visual revision passes can exceed TrueForge's 10-minute default.
+      SERVER_EXECUTION_TIMEOUT_SECONDS:
+        process.env.SERVER_EXECUTION_TIMEOUT_SECONDS || "1800",
       PUBLIC_BASE_URL: forgeUrl,
       OUTBOUND_URL_ALLOWED_HOSTS: JSON.stringify(["127.0.0.1"]),
     },
