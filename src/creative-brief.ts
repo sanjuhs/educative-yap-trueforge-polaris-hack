@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { targetDurationSchema, wordBudget } from "./duration.js";
 
 export const creativeBriefSchema = z.object({
+  targetDurationSeconds: targetDurationSchema
+    .optional()
+    .describe(
+      "Requested AI-voice runtime in 5-second steps, 5–1200 seconds; tolerance ±6 seconds. Presenter duration comes from the original recording.",
+    ),
   footage: z.enum(["auto", "off"]).default("auto"),
   webImagePercent: z.number().int().min(0).max(100).default(40),
   explanationType: z
@@ -34,6 +40,7 @@ export function creativeBriefMessage(value: CreativeBrief) {
       "Use roughly 2–3 seconds per major shot, with quick purposeful cuts and builds. Preserve reading time and narration alignment; avoid flashing.",
   }[brief.pacing];
   return `\n\nUSER CREATIVE BRIEF (overrides generic visual preferences):
+${brief.targetDurationSeconds ? `DURATION: Target ${brief.targetDurationSeconds} seconds, tolerance ±6 seconds. Aim for roughly ${wordBudget(brief.targetDurationSeconds).aim} narration words total, adjusting for pauses. For longer videos write substantial chapters with distinct explanatory beats; never pad a short script with repeated shots or long holds. For 5–10 seconds explain one point. Duration overrides default short-video guidance. Copy targetDurationSeconds into the design creativeBrief. Presenter recordings retain their original duration and voice.` : ""}
 ${sourcing}
 Explanation structure: ${brief.explanationType === "auto" ? "Choose the best structure for this topic" : brief.explanationType}. This selects a teaching approach, never a fixed layout/template.
 Pacing: ${pacing}

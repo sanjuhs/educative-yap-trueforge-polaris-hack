@@ -129,9 +129,11 @@ async function tick() {
     "#text-density",
     "#visual-notes",
     "#footage-mode",
+    "#target-duration",
   ])
     $(id).disabled =
       busy ||
+      (id === "#target-duration" && $("#video-mode").value === "presenter") ||
       (!generationOptions &&
         ["#director-model", "#reasoning-effort"].includes(id));
   try {
@@ -271,6 +273,7 @@ $("#video-mode").onchange = () => {
   revisionProjectId = undefined;
   const presenter = $("#video-mode").value === "presenter";
   $("#presenter-inputs").hidden = !presenter;
+  updateDuration();
   updateBudget();
   $("#prompt").required = !presenter;
   $("#format-hint").textContent = presenter
@@ -330,12 +333,21 @@ function updateBudget() {
   if (!generationOptions) return;
   const selected = selectedGeneration();
   const model = generationOptions.models.find((m) => m.id === selected.model);
+  const presenter = $("#video-mode").value === "presenter";
+  const target = presenter ? 30 : Number($("#target-duration").value);
+  const scale = target / 30;
   const audio = generationOptions.audio[$("#video-mode").value];
   const dollars = (n) => `$${n.toFixed(3)}`;
+  const label = presenter
+    ? "30s recording example"
+    : `${formatDuration(target)} rough AI budget`;
   $("#budget-estimate").textContent =
     audio === null
-      ? `30s AI editing budget: ${dollars(model.estimate.low)}–${dollars(model.estimate.high)} + audio (unpriced)`
-      : `30s AI budget: ~${dollars(model.estimate.low + audio)}–${dollars(model.estimate.high + audio)}`;
+      ? `${label}: ${dollars(model.estimate.low * scale)}–${dollars(model.estimate.high * scale)} + audio (unpriced)`
+      : `${label}: ~${dollars((model.estimate.low + audio) * scale)}–${dollars((model.estimate.high + audio) * scale)}`;
+  $("#budget-assumptions").textContent =
+    generationOptions.estimateBasis +
+    " For other durations this is a proportional planning estimate, not a benchmark or quote. Short videos still incur setup work; long videos can need more context and revisions. Actual usage appears with the result.";
   $("#model-info").textContent =
     `${selected.model} · ${selected.reasoning} reasoning · Original animation through TrueForge`;
 }
@@ -356,6 +368,9 @@ $("#reasoning-effort").onchange = changeGeneration;
 
 function selectedCreativeBrief() {
   return {
+    ...($("#video-mode").value === "presenter"
+      ? {}
+      : { targetDurationSeconds: Number($("#target-duration").value) }),
     footage: $("#footage-mode").value,
     webImagePercent: Number($("#web-image-share").value),
     explanationType: $("#explanation-type").value,
@@ -364,13 +379,40 @@ function selectedCreativeBrief() {
     notes: $("#visual-notes").value.trim(),
   };
 }
+function formatDuration(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, "0")}`;
+}
+function updateDuration() {
+  const presenter = $("#video-mode").value === "presenter";
+  const target = Number($("#target-duration").value);
+  $("#duration-label").textContent = presenter
+    ? "From your recording"
+    : formatDuration(target);
+  $("#target-duration").disabled = busy || presenter;
+  $("#target-duration").setAttribute(
+    "aria-valuetext",
+    `${Math.floor(target / 60)} minutes ${target % 60} seconds`,
+  );
+  $("#duration-hint").textContent = presenter
+    ? "Your recording sets the length; your original voice stays unchanged. Presenter uploads currently support 3–60 seconds."
+    : `Target ${formatDuration(target)} · expected ${formatDuration(Math.max(1, target - 6))}–${formatDuration(target + 6)}. Longer videos add chapters and take more time to generate and render.`;
+}
 function saveCreativeBrief() {
   const brief = selectedCreativeBrief();
+  updateDuration();
+  updateBudget();
   $("#web-image-label").textContent = `${brief.webImagePercent}%`;
   localStorage.setItem("yap-creative-brief", JSON.stringify(brief));
 }
 function applyCreativeBrief(brief) {
   if (!brief || typeof brief !== "object") return;
+  if (Number.isFinite(brief.targetDurationSeconds))
+    $("#target-duration").value = String(
+      Math.max(
+        5,
+        Math.min(1200, Math.round(brief.targetDurationSeconds / 5) * 5),
+      ),
+    );
   if (Number.isFinite(brief.webImagePercent))
     $("#web-image-share").value = String(
       Math.max(0, Math.min(100, brief.webImagePercent)),
@@ -390,6 +432,7 @@ function applyCreativeBrief(brief) {
 }
 for (const id of [
   "#web-image-share",
+  "#target-duration",
   "#explanation-type",
   "#visual-pacing",
   "#text-density",
@@ -400,13 +443,14 @@ for (const id of [
 try {
   applyCreativeBrief(JSON.parse(localStorage.getItem("yap-creative-brief")));
 } catch {}
+updateDuration();
 function showShotPlan(p) {
   const scenes = p.plan.scenes || [];
   $("#shot-plan").hidden = !scenes.length;
   const brief = p.plan.creativeBrief;
   $("#shot-plan-content").innerHTML =
     (brief
-      ? `<p>Requested direction: ${brief.webImagePercent}% photo-led screen time · ${safe(brief.explanationType)} · ${safe(brief.pacing)} pacing. Mix is a target, not a measured result.</p>`
+      ? `<p>Requested direction: ${brief.targetDurationSeconds ? `target ${formatDuration(brief.targetDurationSeconds)} (±6s) · ` : ""}${brief.webImagePercent}% photo-led screen time · ${safe(brief.explanationType)} · ${safe(brief.pacing)} pacing. Mix is a target, not a measured result.</p>`
       : "") +
     `<ol>${scenes.map((s) => `<li><strong>${safe(s.title)}</strong>${s.shotKind ? `<span class="shot-kind">${safe(s.shotKind)}</span>` : ""}<p>${safe(s.visualIntent || "")}</p></li>`).join("")}</ol>`;
 }

@@ -80,7 +80,7 @@ unclear speech. Animated explainers still use approximate phrase timing.
 
 Visuals are original generated scene code, executed in a restricted browser.
 See [the freeform director](docs/freeform-director.md) for the authoring contract,
-local segmentation, setup and limitations. Outputs are limited to 60 seconds.
+local segmentation, setup and limitations. Presenter uploads currently remain limited to 60 seconds; AI-voice duration targets run from 5 seconds to 20 minutes.
 
 ## Visual direction and per-video costs
 
@@ -147,3 +147,12 @@ Choose Luna, Sol or Astra and a reasoning effort in the studio. The selection ap
 ## Autonomous YouTube B-roll
 
 Run `npm run setup:clips` once to install the optional clip tools, then restart the app. Leave **YouTube B-roll → Auto** enabled: the director finds sources, inspects 3–5 second excerpts, and integrates useful footage into the draft without asking for links. Each result includes downloadable, copyable footage credits with channel, title, URL, timestamps and permission-pending status. See [footage workflow and limits](docs/broll-roadmap.md).
+
+
+### Video length and animation guidance
+
+Choose an approximate AI-voice duration from **5 seconds to 20 minutes**, in **5-second steps**. The director receives the target and writes enough narration and distinct beats; final audio aims within **±6 seconds**. Small mismatches can use a pitch-preserving tempo adjustment (0.85–1.18×). Larger mismatches fail with a request to rewrite instead of stretching a short script. Presenter videos keep their original voice and length (current upload limit: 60 seconds).
+
+The [animation skill](skills/animate-explainers/SKILL.md) is automatically included in TrueForge's director instructions. It teaches narration-driven action, procedural objects, camera movement, transitions and varied compositions without enforcing a template. Optional reference analysis is available through `get_animation_reference`. Copy the skill folder into `~/.codex/skills` to use it in Codex as well.
+
+Long videos use up to 160 scenes, sequential audio preparation, concatenation and duration-scaled renderer timeouts. Budget previews scale the 30-second scenario proportionally; they are not measured long-video prices. See [duration support and validation limits](docs/duration-and-animation.md).

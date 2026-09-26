@@ -231,7 +231,10 @@ export function projectUsage(p: Project) {
     ? p.plan.presenterAssetId
       ? (Math.ceil(p.duration) / 60) * 0.006
       : p.audioModel === "gpt-4o-mini-tts"
-        ? (p.scenes!.reduce((n, s) => n + s.duration - 0.25, 0) / 60) * 0.015
+        ? ((p.narrationSeconds ??
+            p.scenes!.reduce((n, s) => n + s.duration - 0.25, 0)) /
+            60) *
+          0.015
         : undefined
     : undefined;
   const finalReview = p.visualReview?.usage;

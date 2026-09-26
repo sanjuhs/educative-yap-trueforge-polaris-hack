@@ -1,3 +1,4 @@
+import { estimatedTimeline } from "./duration.js";
 import { clipIdsSchema } from "./video-clips.js";
 import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { defaultGeneration, type GenerationSettings } from "./model-options.js";
@@ -42,7 +43,7 @@ export const authoredInputSchema = z.object({
   scenes: z
     .array(
       z.object({
-        startSeconds: z.number().min(0).max(60).optional(),
+        startSeconds: z.number().min(0).max(1200).optional(),
         title: z.string().min(1).max(65),
         narration: z.string().min(1).max(450),
         visualIntent: z.string().max(400).optional(),
@@ -54,7 +55,7 @@ export const authoredInputSchema = z.object({
       }),
     )
     .min(1)
-    .max(16),
+    .max(160),
   motion: motionSchema,
 });
 export type AuthoredInput = z.infer<typeof authoredInputSchema>;
@@ -97,13 +98,9 @@ export async function previewDesign(
     : undefined;
   const scenes = asset
     ? presenterTimeline(plan, asset)
-    : plan.scenes.map((s, i) => ({
-        ...s,
-        start: i * 6,
-        duration: 6,
-        audio: "",
-      }));
-  const duration = asset?.duration || scenes.length * 6;
+    : estimatedTimeline(plan.scenes, plan.creativeBrief?.targetDurationSeconds);
+  const duration =
+    asset?.duration || scenes.reduce((sum, s) => sum + s.duration, 0);
   await fs.writeFile(
     path.join(dir, "render-input.json"),
     JSON.stringify({

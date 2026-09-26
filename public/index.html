@@ -43,6 +43,30 @@
                 Me + explainer visuals · My voice
               </option>
             </select>
+            <div id="duration-controls" class="creative-controls">
+              <label for="target-duration"
+                >Approximate video length
+                <output id="duration-label" for="target-duration"
+                  >0:30</output
+                ></label
+              >
+              <input
+                id="target-duration"
+                type="range"
+                min="5"
+                max="1200"
+                step="5"
+                value="30"
+                aria-describedby="duration-hint"
+              />
+              <div class="mix-endpoints">
+                <span>5 seconds</span><span>20 minutes</span>
+              </div>
+              <p id="duration-hint" class="muted">
+                Aim within ±6 seconds. Longer videos add chapters and take more
+                time to generate and render.
+              </p>
+            </div>
             <div class="model-controls">
               <div>
                 <label for="director-model">AI director</label>
@@ -64,7 +88,7 @@
                 images + original graphics; no image-generation API calls.
               </p>
               <details>
-                <summary>30-second estimate assumptions</summary>
+                <summary>Estimate assumptions</summary>
                 <p id="budget-assumptions"></p>
                 <p>
                   Audio adds ~$0.003 for an imported 30-second recording, or
@@ -183,18 +207,18 @@
             ><textarea
               id="prompt"
               maxlength="6000"
-              placeholder="Why does the sky turn red at sunset? Explain it like a curious science creator, in 30 seconds."
+              placeholder="Why does the sky turn red at sunset? Explain it like a curious science creator, at the selected length."
               required
             ></textarea>
             <div class="suggestions">
               <button
                 type="button"
-                data-topic="Explain why the sky turns red at sunset. Use a vivid analogy and make it 30 seconds."
+                data-topic="Explain why the sky turns red at sunset. Use a vivid analogy and use the selected length."
               >
                 A red sunset ↗</button
               ><button
                 type="button"
-                data-topic="Explain how a neural network learns, using a simple analogy. Make it about 30 seconds."
+                data-topic="Explain how a neural network learns, using a simple analogy. Use the selected length."
               >
                 How AI learns ↗</button
               ><button

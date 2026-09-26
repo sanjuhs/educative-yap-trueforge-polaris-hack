@@ -2,12 +2,13 @@ import { clipIdsSchema, type VideoClip } from "./video-clips.js";
 import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { motionSchema, placementSchema } from "./motion-schema.js";
 import { z } from "zod";
+import { wordBudget } from "./duration.js";
 export const sceneSchema = z.object({
   shotKind: shotKindSchema.optional(),
   startSeconds: z
     .number()
     .min(0)
-    .max(60)
+    .max(1200)
     .optional()
     .describe(
       "Presenter mode only: when this visual begins in the original recording; first scene starts at 0",
@@ -76,17 +77,20 @@ export const planSchema = z
       .boolean()
       .default(true)
       .describe("Add a quiet original synthesized ambient bed"),
-    scenes: z.array(sceneSchema).min(1).max(16),
+    scenes: z.array(sceneSchema).min(1).max(160),
   })
   .superRefine((plan, ctx) => {
     const words = plan.scenes.reduce(
       (sum, s) => sum + s.narration.trim().split(/\s+/).length,
       0,
     );
-    if (!plan.presenterAssetId && words > 135)
+    const maxWords = plan.creativeBrief?.targetDurationSeconds
+      ? wordBudget(plan.creativeBrief.targetDurationSeconds).max
+      : 135;
+    if (!plan.presenterAssetId && words > maxWords)
       ctx.addIssue({
         code: "custom",
-        message: "Keep the whole script at 135 words or fewer.",
+        message: `Keep the whole script at ${maxWords} words or fewer for the requested duration.`,
       });
     plan.scenes.forEach((s, i) => {
       if (s.visual === "web" && !s.webStage)
@@ -131,6 +135,8 @@ export type Project = {
   duration?: number;
   error?: string;
   audioModel?: string;
+  narrationSeconds?: number;
+  narrationTempo?: number;
   footage?: VideoClip[];
   visualReview?: {
     model: string;

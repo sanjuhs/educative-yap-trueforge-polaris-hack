@@ -1,3 +1,5 @@
+import { prepareNarration } from "./narration-timing.js";
+import { durationRange, MAX_VIDEO_SECONDS, renderTimeout } from "./duration.js";
 import { readClip, clipCredits } from "./video-clips.js";
 import { compositeCutout } from "./cutout.js";
 import { authoredHtml } from "./render-browser.js";
@@ -209,9 +211,23 @@ export async function renderProject(p: Project) {
       scenes.push({ ...s, start: cursor, duration, audio });
       cursor += duration;
     }
-  if (cursor > 60)
+  if (!presenter) {
+    const target = p.plan.creativeBrief?.targetDurationSeconds;
+    const timed = await prepareNarration(dir, scenes, target);
+    cursor = timed.duration;
+    p.narrationSeconds = timed.sourceSeconds;
+    p.narrationTempo = timed.tempo;
+    if (target !== undefined) {
+      const range = durationRange(target);
+      if (cursor < range.min || cursor > range.max)
+        throw new Error(
+          `Narration is ${cursor.toFixed(1)}s outside the ${target}s target ±6s. Revise the script.`,
+        );
+    }
+  }
+  if (cursor > MAX_VIDEO_SECONDS + 6)
     throw new Error(
-      `Narration is ${cursor.toFixed(1)} seconds. Shorten the script and create a new version (maximum 60 seconds).`,
+      "Narration exceeds the 20-minute target plus 6-second tolerance. Shorten the script.",
     );
   p.scenes = scenes;
   p.duration = cursor;
@@ -277,7 +293,7 @@ export async function renderProject(p: Project) {
         dir,
       ],
       {
-        timeout: 900000,
+        timeout: renderTimeout(cursor),
         env: safeEnv,
         onOutput: (text) => {
           void fs
@@ -287,30 +303,18 @@ export async function renderProject(p: Project) {
       },
     );
     if (!presenter) {
-      const audioArgs = scenes.flatMap((s) => ["-i", path.join(dir, s.audio)]);
-      const filters =
-        scenes
-          .map(
-            (s, i) =>
-              `[${i + 1}:a]adelay=${Math.round(s.start * 1000)}:all=1[a${i}]`,
-          )
-          .join(";") +
-        ";" +
-        scenes.map((_, i) => `[a${i}]`).join("") +
-        `amix=inputs=${scenes.length}:normalize=0:duration=longest[a]`;
       await run("ffmpeg", [
         "-v",
         "error",
         "-y",
         "-i",
         path.join(dir, "render.mp4"),
-        ...audioArgs,
-        "-filter_complex",
-        filters,
+        "-i",
+        path.join(dir, "narration.wav"),
         "-map",
         "0:v",
         "-map",
-        "[a]",
+        "1:a",
         "-c:v",
         "copy",
         "-c:a",
@@ -339,7 +343,7 @@ export async function renderProject(p: Project) {
         "standard",
       ],
       {
-        timeout: 900000,
+        timeout: renderTimeout(cursor),
         env: safeEnv,
         onOutput: (text) => {
           void fs

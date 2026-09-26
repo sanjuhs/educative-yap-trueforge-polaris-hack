@@ -44,6 +44,25 @@ const reply = (value: unknown) => ({
 function makeMcp(settings: GenerationSettings) {
   const server = new McpServer({ name: "educative-video", version: "0.1.0" });
   server.registerTool(
+    "get_animation_reference",
+    {
+      description:
+        "Read optional implementation analysis of the studied animation reference: camera motion, procedural objects, narration timing and varied explanatory shots. The core animation skill is already in your instructions.",
+      inputSchema: {},
+    },
+    async () =>
+      reply(
+        await fs.readFile(
+          path.join(
+            config.root,
+            "skills/animate-explainers/references/reference-analysis.md",
+          ),
+          "utf8",
+        ),
+      ),
+  );
+
+  server.registerTool(
     "search_youtube_clips",
     {
       description:
