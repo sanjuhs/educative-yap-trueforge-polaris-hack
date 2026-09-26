@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Educative Yap — a little video, a big idea</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="logo" href="/">yap<span>↗</span></a
+      ><span class="edition">THE EXPLAINER STUDIO</span
+      ><a
+        id="forge-link"
+        href="http://127.0.0.1:8790"
+        target="_blank"
+        rel="noreferrer"
+        >Open TrueForge ↗</a
+      >
+    </header>
+    <main>
+      <section class="intro">
+        <div class="kicker"><span></span> YOUR CURIOSITY, IN MOTION</div>
+        <h1>Big ideas.<br /><em>Little videos.</em></h1>
+        <p>
+          Give your idea a voice, a little motion, and a moment<br
+            class="desktop"
+          />
+          in the spotlight. Make something worth explaining.
+        </p>
+      </section>
+      <section class="workspace">
+        <div class="director">
+          <div class="panel-top">
+            <span>01 / THE IDEA</span><span id="connection">CONNECTING…</span>
+          </div>
+          <form id="prompt-form">
+            <label for="prompt">What are we explaining?</label
+            ><textarea
+              id="prompt"
+              maxlength="6000"
+              placeholder="Why does the sky turn red at sunset? Explain it like a curious science creator, in 30 seconds."
+              required
+            ></textarea>
+            <div class="suggestions">
+              <button
+                type="button"
+                data-topic="Explain why the sky turns red at sunset. Use a vivid analogy and make it 30 seconds."
+              >
+                A red sunset ↗</button
+              ><button
+                type="button"
+                data-topic="Explain how a neural network learns, using a simple analogy. Make it about 30 seconds."
+              >
+                How AI learns ↗</button
+              ><button
+                type="button"
+                data-topic="Explain why the Moon has phases. Clarify that Earth's shadow is not the cause. Make it 30 seconds."
+              >
+                Phases of the Moon ↗
+              </button>
+            </div>
+            <div class="form-bottom">
+              <span>9:16 · AI voice · Motion · MP4</span
+              ><button id="create" type="submit">
+                Make a little video <span>↗</span>
+              </button>
+            </div>
+          </form>
+          <div id="activity" role="status" aria-live="polite">
+            Ready when your curiosity is.
+          </div>
+          <div id="chat-log"></div>
+          <button id="new-chat" class="text-button" type="button" hidden>
+            Start a fresh idea +
+          </button>
+        </div>
+        <aside class="preview-panel">
+          <div class="panel-top">
+            <span>02 / THE RESULT</span><span>1080 × 1920</span>
+          </div>
+          <div id="preview">
+            <div class="empty-frame">
+              <div class="orb"></div>
+              <span class="frame-word">AHA<span>!</span></span>
+              <p>That moment when<br />it all makes sense.</p>
+              <small>YOUR NEXT EXPLAINER LIVES HERE</small>
+            </div>
+          </div>
+          <div id="video-actions"></div>
+        </aside>
+      </section>
+      <section class="library">
+        <div class="library-title">
+          <h2>Your little collection<span id="count">00</span></h2>
+          <span>MADE HERE. KEPT ON YOUR COMPUTER.</span>
+        </div>
+        <div id="projects" class="project-grid">
+          <p class="muted">Every idea starts somewhere. This is yours.</p>
+        </div>
+      </section>
+      <footer>
+        <span>BUILT WITH TRUEFORGE + HYPERFRAMES</span
+        ><span>AI-generated narration · Local rendering · Your ideas</span>
+      </footer>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

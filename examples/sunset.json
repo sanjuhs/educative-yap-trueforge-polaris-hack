@@ -1,0 +1,40 @@
+{
+  "title": "Why the Sky Turns Red at Sunset",
+  "summary": "A 4-scene vertical explainer on why sunsets look red, using a vivid but accurate analogy about light being filtered through a longer path in air.",
+  "voice": "marin",
+  "music": true,
+  "scenes": [
+    {
+      "title": "Why red at sunset?",
+      "narration": "Why does the sky suddenly glow red at sunset? It’s not the Sun changing color. It’s sunlight taking a much longer trip through the air.",
+      "visual": "orbit",
+      "labels": ["Sunlight", "Longer path", "Air"],
+      "values": [],
+      "accent": "coral"
+    },
+    {
+      "title": "Blue gets scattered first",
+      "narration": "Think of the atmosphere like a giant sifter. Shorter blue wavelengths get tossed around in every direction, while red light slips through more easily.",
+      "visual": "steps",
+      "labels": ["Blue scatters", "Red keeps going", "To your eyes"],
+      "values": [],
+      "accent": "blue"
+    },
+    {
+      "title": "Noon versus sunset",
+      "narration": "At noon, sunlight passes through less air, so plenty of blue is scattered across the whole sky. At sunset, that extra filtering leaves warmer colors behind.",
+      "visual": "comparison",
+      "labels": ["Noon sky", "Sunset sky"],
+      "values": [],
+      "accent": "violet"
+    },
+    {
+      "title": "The sunset takeaway",
+      "narration": "So a red sunset is really the atmosphere sorting sunlight by color. Longer path, more scattering, redder sky.",
+      "visual": "statement",
+      "labels": ["Longer path", "More scattering", "Redder light"],
+      "values": [],
+      "accent": "lime"
+    }
+  ]
+}
