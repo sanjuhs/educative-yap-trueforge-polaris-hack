@@ -33,3 +33,11 @@ The video includes creator credits, and the studio links to the source record. S
 Footage/news snippets need a separate acquisition and rendering path, not an extension of image URLs: return candidates with source, date/location and duration; inspect a contact sheet; select exact in/out timestamps; store the excerpt and original reference; align it to narration; explicitly choose whether source audio is used. The deterministic renderer must seek to the selected source frame for every output timestamp. Ordinary autonomous video playback is insufficient for this frame-by-frame export.
 
 Web research/extraction can be added through Firecrawl or another search provider. It helps discover and read sources, but does not replace footage selection, provenance or playback. These moving-media capabilities are not implemented by the image-search tools.
+
+## Still-photo movement
+
+The host renderer gives imported photographs and raster data images a gentle zoom or horizontal pan on every frame. It changes the image’s internal crop (0.5–4% per edge for zooms), preserving its layout, rounded frame, authored transitions, captions and separate labels. Clip frames and inline SVG diagrams are excluded.
+
+Author photos as `<img src="visual-<id>" data-scene="0" data-photo-motion="zoom-in">`. Modes are `zoom-in`, `zoom-out`, `pan-left` and `pan-right`; omitted modes alternate. `data-scene` can also be on a parent, and optional `data-offset` delays the photo within the scene. Motion uses actual scene start/duration; legacy photos without scene metadata use the full video duration. Keep critical content away from the outer 4% and use `data-photo-motion="none"` for exact-view charts/screenshots. Use img elements for photos; CSS background/Canvas/SVG images are not host-animated.
+
+This deterministic movement is applied in previews and exports, including backwards seeks. Existing exported MP4s are unchanged; newly rendered versions receive it.

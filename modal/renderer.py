@@ -28,7 +28,7 @@ render_image = (
     .env({"YAP_RENDER_WORKER": "1"})
 )
 # An explicit allowlist prevents accidental inclusion of .env, uploads or keys.
-for name in ["authored-worker.ts", "render-browser.ts", "video-clips.ts",
+for name in ["authored-worker.ts", "render-browser.ts", "photo-motion.ts", "video-clips.ts",
              "visual-assets.ts", "process.ts", "config.ts"]:
     render_image = render_image.add_local_file(root / "src" / name, f"/opt/yap/src/{name}", copy=True)
 render_image = render_image.add_local_file(root / "assets/cafe.png", "/opt/yap/assets/cafe.png", copy=True)

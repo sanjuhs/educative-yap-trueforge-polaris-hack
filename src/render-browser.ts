@@ -6,6 +6,7 @@ import { config } from "./config.js";
 import type { Plan, TimedScene } from "./schema.js";
 import type { Caption } from "./presenter.js";
 import { readVisualAsset, visualAssetPath } from "./visual-assets.js";
+import { applyPhotoMotion } from "./photo-motion.js";
 
 export type RenderInput = {
   plan: Plan;
@@ -230,6 +231,11 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
         clips,
       },
     );
+    await page.evaluate(applyPhotoMotion, {
+      time,
+      duration: input.duration,
+      scenes: input.scenes,
+    });
     if (errors.length) throw new Error(errors.join("; ").slice(0, 1500));
   }
   return { page, context, seek, errors, blocked };

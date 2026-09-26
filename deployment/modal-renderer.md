@@ -35,7 +35,7 @@ sequenceDiagram
 4. Put the printed API URL in backend `YAP_MODAL_RENDER_URL`, and the same token in backend `YAP_MODAL_RENDER_TOKEN`. These are server-side variables, never `NEXT_PUBLIC_*` or browser configuration.
 5. Redeploy the Modal app when trusted renderer source or pinned dependencies change.
 
-The build copies six explicitly named trusted TypeScript files, the bundled cafe image, and a minimal pinned npm manifest. It never uploads `.env`, `.data`, application credentials, or existing videos into the image. The endpoint authentication secret is attached to the API function only; no secret is attached to the render job or its child Sandbox.
+The build copies seven explicitly named trusted TypeScript files, the bundled cafe image, and a minimal pinned npm manifest. It never uploads `.env`, `.data`, application credentials, or existing videos into the image. The endpoint authentication secret is attached to the API function only; no secret is attached to the render job or its child Sandbox.
 
 ## Execution boundary
 

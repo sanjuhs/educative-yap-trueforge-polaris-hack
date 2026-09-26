@@ -5,7 +5,7 @@ export const motionSchema = z.object({
     .min(1)
     .max(45000)
     .describe(
-      "Custom HTML/SVG inside the 1080×1920 artboard. No scripts, iframes, external URLs or event attributes. For declared clips, use host-managed img data-clip-id with data-scene and data-offset. Images: imported visual-<id> paths declared in visualAssetIds, cafe.png, inline SVG and data images are allowed.",
+      "Custom HTML/SVG inside the 1080×1920 artboard. No scripts, iframes, external URLs or event attributes. For declared clips, use host-managed img data-clip-id with data-scene and data-offset. Images: imported visual-<id> paths declared in visualAssetIds, cafe.png, inline SVG and data images are allowed. Render photographs as img with data-scene and data-photo-motion=zoom-in, zoom-out, pan-left or pan-right; host gently moves image contents while preserving the frame. Use none only for diagrams/screenshots requiring an exact full view. Leave room for up to 4% edge cropping.",
     ),
   css: z
     .string()
