@@ -1,3 +1,4 @@
+import { readClip, clipCredits } from "./video-clips.js";
 import { compositeCutout } from "./cutout.js";
 import { authoredHtml } from "./render-browser.js";
 import { projectUsage } from "./usage.js";
@@ -66,6 +67,13 @@ export function publicProject(p: Project) {
   return {
     ...p,
     usage: projectUsage(p),
+    creditsText: clipCredits(p.footage || []),
+    clipSourcesUrl: p.footage?.length
+      ? `${studioUrl}/media/${p.id}/clip-sources.json`
+      : undefined,
+    creditsUrl: p.footage?.length
+      ? `${studioUrl}/media/${p.id}/credits.txt`
+      : undefined,
     videoUrl:
       p.status === "complete"
         ? `${studioUrl}/media/${p.id}/video.mp4`
@@ -76,6 +84,9 @@ export function publicProject(p: Project) {
 }
 export async function createProject(input: Plan) {
   const plan = planSchema.parse(input);
+  const footage = await Promise.all((plan.clipAssetIds || []).map(readClip));
+  if (footage.length && !plan.motion)
+    throw new Error("Footage requires an authored motion design.");
   if (plan.presenterAssetId)
     presenterTimeline(plan, await getPresenter(plan.presenterAssetId));
   if (
@@ -91,8 +102,26 @@ export async function createProject(input: Plan) {
     status: "queued",
     progress: "Queued for narration",
     plan,
+    footage,
   };
   await save(project);
+  if (footage.length) {
+    await fs.writeFile(
+      path.join(projectDir(project.id), "clip-sources.json"),
+      JSON.stringify(
+        {
+          clips: footage,
+          note: "Permission pending. Uploader metadata does not verify rights ownership or historical identity.",
+        },
+        null,
+        2,
+      ),
+    );
+    await fs.writeFile(
+      path.join(projectDir(project.id), "credits.txt"),
+      "FOOTAGE CREDITS — DRAFT / PERMISSION PENDING\n\n" + clipCredits(footage),
+    );
+  }
   queue = queue
     .then(() => renderProject(project))
     .catch(async (err) => {

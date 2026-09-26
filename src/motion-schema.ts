@@ -5,7 +5,7 @@ export const motionSchema = z.object({
     .min(1)
     .max(45000)
     .describe(
-      "Custom HTML/SVG inside the 1080×1920 artboard. No scripts, iframes, external URLs or event attributes. Images: cafe.png is available; inline SVG and data images allowed.",
+      "Custom HTML/SVG inside the 1080×1920 artboard. No scripts, iframes, external URLs or event attributes. For declared clips, use host-managed img data-clip-id with data-scene and data-offset. Images: cafe.png is available; inline SVG and data images allowed.",
     ),
   css: z
     .string()

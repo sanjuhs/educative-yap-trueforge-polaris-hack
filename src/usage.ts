@@ -25,6 +25,18 @@ type Run = {
 };
 const runs = new Map<string, Run>();
 const folder = path.join(config.data, "usage");
+export function effectiveToolName(call: any): string | undefined {
+  if (call.function?.name !== "call_tool") return call.function?.name;
+  try {
+    const args =
+      typeof call.function.arguments === "string"
+        ? JSON.parse(call.function.arguments)
+        : call.function.arguments;
+    return typeof args?.tool_name === "string" ? args.tool_name : undefined;
+  } catch {
+    return undefined;
+  }
+}
 export function estimateTokens(
   model: string,
   input: number,
@@ -110,7 +122,9 @@ async function monitor(r: Run) {
         row.type === "model.message"
           ? (row.tool_calls || [])
               .filter((c: any) =>
-                ["create_video", "render_design"].includes(c.function?.name),
+                ["create_video", "render_design"].includes(
+                  effectiveToolName(c) || "",
+                ),
               )
               .map((c: any) => c.id)
           : [],
@@ -274,7 +288,7 @@ export function projectUsage(p: Project) {
     pricingDate: "2026-09-26",
     pricingSource: "https://developers.openai.com/api/docs/pricing",
     exclusions:
-      "Bundled image creation, local compute, failed/retried API attempts and account-specific discounts. No TrueFoundry savings benchmark yet.",
+      "Bundled image creation, clip licensing fees, local compute/storage/network, failed/retried API attempts and account-specific discounts. No TrueFoundry savings benchmark yet.",
     imageAsset:
       p.plan.motion?.html.includes("cafe.png") ||
       p.plan.scenes.some((s) => ["web", "photo"].includes(s.visual))

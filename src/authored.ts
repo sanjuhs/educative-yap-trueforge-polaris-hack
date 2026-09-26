@@ -1,3 +1,4 @@
+import { clipIdsSchema } from "./video-clips.js";
 import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { defaultGeneration, type GenerationSettings } from "./model-options.js";
 import { reviewFrames } from "./vision-review.js";
@@ -12,6 +13,11 @@ import { run, rendererEnv } from "./process.js";
 
 import { motionSchema, placementSchema } from "./motion-schema.js";
 export const authoredInputSchema = z.object({
+  clipAssetIds: clipIdsSchema
+    .optional()
+    .describe(
+      'Imported clip IDs. Place footage with <img data-clip-id="ID" data-scene="0" data-offset="0">. Host synchronizes 30fps frames to that scene; clip is hidden outside its duration. Animate a wrapper for overlays/transitions; do not change the image src. All clip audio is muted.',
+    ),
   creativeBrief: creativeBriefSchema
     .optional()
     .describe(

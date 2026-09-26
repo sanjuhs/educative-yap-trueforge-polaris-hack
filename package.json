@@ -15,7 +15,8 @@
     "test": "tsx --test tests/*.test.ts",
     "demo": "tsx scripts/demo.ts",
     "format": "prettier --write src public scripts tests examples package.json tsconfig.json README.md docs",
-    "format:check": "prettier --check src public scripts tests examples package.json tsconfig.json README.md docs"
+    "format:check": "prettier --check src public scripts tests examples package.json tsconfig.json README.md docs",
+    "setup:clips": "tsx scripts/setup-clips.ts"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",

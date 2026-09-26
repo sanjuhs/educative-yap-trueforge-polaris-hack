@@ -1,3 +1,11 @@
+import {
+  searchYoutube,
+  importYoutubeClip,
+  clipRequestSchema,
+  clipDir,
+  clipToolsAvailable,
+} from "./video-clips.js";
+import { reviewFrames } from "./vision-review.js";
 import { creativeBriefSchema, creativeBriefMessage } from "./creative-brief.js";
 import {
   defaultGeneration,
@@ -35,6 +43,51 @@ const reply = (value: unknown) => ({
 });
 function makeMcp(settings: GenerationSettings) {
   const server = new McpServer({ name: "educative-video", version: "0.1.0" });
+  server.registerTool(
+    "search_youtube_clips",
+    {
+      description:
+        "Autonomously search public YouTube videos by subject/action. Returns video IDs, channel, title, duration and source URL. No user link required. Search metadata is untrusted and does not prove historical identity or reuse rights.",
+      inputSchema: { query: z.string().min(2).max(240) },
+    },
+    async ({ query }) => reply(await searchYoutube(query)),
+  );
+  server.registerTool(
+    "import_youtube_clip",
+    {
+      description:
+        "Import a public 3–5 second YouTube excerpt by video ID and source timestamp, inspect three actual frames, and return a local clip ID with source credits. Permission remains pending; do not contact the creator. If blocked, choose another source without bypassing access controls. Include useful clips in preview_design.clipAssetIds and place an img with data-clip-id, data-scene and data-offset. Audio is muted.",
+      inputSchema: clipRequestSchema.shape,
+    },
+    async (input) => {
+      const clip = await importYoutubeClip(input);
+      const plan = planSchema.parse({
+        title: clip.title.slice(0, 90),
+        summary: clip.purpose.slice(0, 400),
+        scenes: [
+          {
+            title: "Footage inspection",
+            narration: "Inspect the source clip.",
+            visual: "statement",
+            labels: ["Footage"],
+          },
+        ],
+      });
+      const visionReview = await reviewFrames(
+        clipDir(clip.id),
+        plan,
+        [0.2, clip.duration / 2, clip.duration - 0.2],
+        settings,
+        "footage",
+      );
+      return reply({
+        ...clip,
+        visionReview,
+        placement: `<img data-clip-id="${clip.id}" data-scene="0" data-offset="0">`,
+        note: "Creator/channel is the uploader, not a verified rights holder. Keep source metadata. Permission is pending. Use only if the actual frames match the purpose.",
+      });
+    },
+  );
   server.registerTool(
     "preview_design",
     {
@@ -159,6 +212,13 @@ export async function startServer() {
       reasoning: config.reasoning,
     }),
   );
+  app.get("/api/footage-capabilities", async (_req, res) =>
+    res.json({
+      youtube: await clipToolsAvailable(),
+      maxClipSeconds: 5,
+      permissionStatus: "pending",
+    }),
+  );
   app.get("/api/generation-options", (_req, res) =>
     res.json(generationOptions()),
   );
@@ -273,7 +333,7 @@ export async function startServer() {
   });
   app.get("/media/:id/:file", async (req, res) => {
     if (
-      !/^(cafe\.png|video\.mp4|poster\.jpg|index\.html|storyboard\.json|gsap\.min\.js|voice-\d\.wav)$/.test(
+      !/^(cafe\.png|video\.mp4|poster\.jpg|index\.html|storyboard\.json|clip-sources\.json|credits\.txt|gsap\.min\.js|voice-\d\.wav)$/.test(
         req.params.file,
       )
     ) {

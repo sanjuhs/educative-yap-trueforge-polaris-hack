@@ -1,40 +1,41 @@
-# Visual direction and moving footage
+# Autonomous footage and creative direction
 
-## Available now
+The studio now supports **YouTube B-roll: Auto**. Users supply a topic, not a source link. The TrueForge director searches public YouTube videos, chooses 3–5 second excerpts, inspects actual frames, and places suitable clips alongside original motion graphics. **Off** keeps footage out of that request. Internet-photo share applies to the non-footage portions; it remains a soft editorial target.
 
-The studio sends a validated creative brief with every request: desired internet-photo screen-time share (0–100%), explanation type, pacing, text density and freeform visual notes. These are instructions to the director, not measured quotas or fixed templates. At zero, the director is instructed not to search/import photos. At other settings it should prefer relevant assets over filling a quota. Existing model and reasoning controls continue to apply.
+## Setup
 
-The director can record this brief in the storyboard and classify scenes as `diagram`, `animation`, `photo`, `screen-demo` or `mixed`. The studio displays these classifications and each scene's teaching purpose under **Shot plan & visual types**. Labels are authored planning metadata, not automatic verification of what appears on screen. Older projects retain their existing plans.
+Install Python 3.10+ (or uv), then run:
 
-The web-image integration in the working prototype searches/imports Wikimedia Commons still images. **Moving B-roll import, stock-video search and YouTube clip acquisition are not implemented.** A moving-photo effect is not footage.
+```sh
+npm run setup:clips
+npm start
+```
 
-## Build the editor around shots
+The installer creates an ignored `.data/clip-tools` environment using `requirements-clips.txt`. Node and FFmpeg are also required by the app. `YT_DLP_PATH` can point to an existing yt-dlp executable. The tools require no YouTube API key or browser login. YouTube availability and extraction can change; inaccessible streams produce an error and the agent is instructed to choose another public source or disclose a fallback, not repeatedly retry or ask for user links.
 
-1. Align the transcript to narration timestamps. For each beat, state what the viewer should understand and choose a medium: explanatory animation, real-world B-roll, interface walkthrough, map/chart, or a contextual evidence excerpt.
-2. Search for the required subject and action, not just the topic. Stock footage can illustrate a general concept; footage presented as a specific event must match its identity, date and location.
-3. Inspect candidate contact sheets. Keep the source page, creator, license, retrieval date, source duration and classification with each candidate. Relevant motion matters more than arbitrary cutting speed.
-4. Select source in/out points and timeline placement. Start with 2–5 second inserts as an editorial heuristic, adjusted for the narration and the shot's purpose. These durations are not copyright exemptions.
-5. Combine footage with freely authored graphics: tracking labels, annotations, diagrams, split screens, close-ups and presenter cutouts. Keep source audio muted by default; deliberately select audio when it is evidence or needed context.
-6. Render and review both representative frames and transitions. Verify the right excerpt, legible overlays, audio continuity and source attribution.
+## Agent workflow
 
-An initial clip record should include `assetId`, `sourceUrl`, `creator`, `license`, `rightsBasis`, `inSeconds`, `outSeconds`, `timelineStart`, `purpose`, `crop`, `layout` and `audioMode`. Source metadata is evidence about origin and stated terms, not an automatic legal clearance decision.
+- `search_youtube_clips(query)` returns up to five video IDs with titles, channels, durations and source URLs. The agent plans the needed subject/action and supplies the query.
+- `import_youtube_clip(videoId, startSeconds, durationSeconds, purpose)` imports a 3–5 second excerpt, normalizes it to a muted local MP4, decodes 30fps frames and asks the selected vision model to inspect three actual frames. The resulting critique, metadata and asset ID are returned to the director. Titles and channel names do not prove historical identity or rights ownership.
+- The director includes selected IDs in `preview_design.clipAssetIds` and places each clip using `<img data-clip-id="ID" data-scene="0" data-offset="0">`. The host selects the exact decoded frame using the actual scene start and optional offset. The clip is hidden outside its duration or scene boundary. The model freely designs the surrounding HTML/CSS, wrappers, transitions, annotations and diagrams; it must not mutate the clip image's `src`.
+- The normal preview, critique, repair and render loop follows. Repeated/backward seeks are verified to match, including footage. Source audio stays muted while narration continues.
 
-## Next implementation slice
+The agent is instructed to use at most three excerpts for a short video by default, try at most two alternate sources after download failures, and avoid making specific historical claims from search keywords alone. These are editorial bounds; the import schema allows at most six declared assets and strictly limits each excerpt to five seconds.
 
-Start with user-supplied clips and a Pexels adapter. Add `search_video_clips`, `inspect_clip` (contact sheet + metadata) and `import_clip_segment`, with bounded downloads and durations. A provider adapter should resolve canonical download URLs; the agent should not fetch arbitrary URLs into the renderer. Pexels requires an API key and attribution in API integrations. Pixabay is another API source. Neither is a general source of exact news-event footage.
+## Credits and review
 
-Normalize imports to local MP4, then either decode frames at exact source timestamps or composite trimmed segments with FFmpeg. The current export seeks a browser frame by frame, so ordinary `<video autoplay>` would drift or freeze. A browser video path must pause every element, set `currentTime`, wait for the decoded frame, and pass the same backward-seek checks as animations. Predecoded image sequences offer simpler determinism at a storage cost. Keep source audio separate from visuals and retain narration as the timeline clock.
+Every project using footage stores `clip-sources.json` and `credits.txt`. The result panel displays copyable footage credits containing the uploader/creator, channel name/link, video title/link, source timestamps, stated licence and intended visual purpose. The JSON record additionally includes retrieval time, local duration/dimensions and asset ID. All imported clips start with **permission pending**. No creator is contacted automatically, and preparing the draft does not pause for permission review. Credits do not imply permission; the uploader may not own every element in a video.
 
-Expose a B-roll share control only after that path works. A three-way mix could then allocate footage, photographs and original graphics, with presenter visibility controlled separately. The editor should report achieved screen time, substitutions and unavailable assets. Do not add a nonfunctional B-roll slider to the current UI.
+The app does not auto-publish. Permission/licence review happens before the user chooses how to distribute the result. It does not determine fair use or legal clearance. The acquisition tools do not use browser cookies, sign-in, DRM bypass or arbitrary agent-supplied URLs. Some sites or videos may not permit the intended acquisition or reuse; source terms and the intended use remain relevant.
 
-## YouTube excerpts
+## Isolation, costs and limits
 
-Treat YouTube URLs as references first. Reusable sources include material the user owns or has permission to use and appropriately licensed material (for example, CC BY with its attribution conditions). Standard YouTube licensing does not grant general reuse rights. Fair use/fair dealing depends on the jurisdiction and specific use; there is no universal safe number of seconds, and credit alone is insufficient. Obtaining a file is a separate issue from copyright permission: YouTube's terms restrict downloading except where authorized by the service or relevant permissions. Prefer creator-provided originals or authorized downloads rather than building an indiscriminate downloader.
+The importer is a **bounded local subprocess**, not a Docker/VM security sandbox. It runs without API-key environment variables, ignores downloader configuration/plugins, accepts only validated YouTube IDs, caps downloads at 80 MB, applies timeouts and serializes imports. Generated animation executes separately in the existing isolated browser, with access only to declared local clip frames. Failed imports remove their own temporary directory.
 
-Official sources, checked September 26, 2026:
+Footage frame inspection uses the selected OpenAI model/effort and is included in the turn's measured review usage. Search/download/FFmpeg add no LLM tokens themselves, but tool results add director context. Local compute, storage, bandwidth and any licensing fees are outside the AI estimate. Failed API attempts without returned usage remain excluded as disclosed in the cost panel.
 
-- [Pexels video API and attribution guidelines](https://www.pexels.com/api/documentation/)
-- [Pixabay video API](https://pixabay.com/api/docs/)
-- [YouTube license types](https://support.google.com/youtube/answer/2797468?hl=en)
-- [YouTube fair-use guidance](https://support.google.com/youtube/answer/9783148?hl=en)
-- [YouTube terms](https://www.youtube.com/static?template=terms)
+Creative controls also include pacing, explanation type, text density and visual notes. Scenes can be classified as `diagram`, `animation`, `photo`, `b-roll`, `screen-demo` or `mixed`. These are director-authored planning labels, not an automatic content verification system.
+
+Future work: uploaded footage, licensed-stock adapters, better temporal inspection beyond three frames, scene-level source replacement, approval/permission records, on-screen attribution options and container isolation for hosted deployments. Automatic historical corroboration is not implemented.
+
+References: [yt-dlp documentation](https://github.com/yt-dlp/yt-dlp), [YouTube terms](https://www.youtube.com/static?template=terms), [YouTube licence types](https://support.google.com/youtube/answer/2797468?hl=en), [YouTube fair-use guidance](https://support.google.com/youtube/answer/9783148?hl=en).

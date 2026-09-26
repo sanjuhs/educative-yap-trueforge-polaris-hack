@@ -38,6 +38,8 @@ function show(p) {
   selectedId = p.id;
   showUsage(p.usage);
   showShotPlan(p);
+  $("#footage-credits").hidden = !p.creditsText;
+  $("#footage-credits-text").value = p.creditsText || "";
   const signature = `${p.id}:${p.status}:${p.progress}`;
   if (signature === lastPreview) return;
   lastPreview = signature;
@@ -47,7 +49,7 @@ function show(p) {
     $("#preview").innerHTML =
       `<video controls playsinline preload="metadata" poster="/media/${p.id}/poster.jpg" src="${safe(p.videoUrl)}"></video>`;
     $("#video-actions").innerHTML =
-      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Animation source ↗</a><button type="button" id="revise-video" class="text-button">Revise this video ↗</button>`;
+      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Animation source ↗</a>${p.clipSourcesUrl ? `<a href="${safe(p.clipSourcesUrl)}" target="_blank">Footage sources ↗</a><a href="${safe(p.creditsUrl)}" download>Credits ↓</a>` : ""}<button type="button" id="revise-video" class="text-button">Revise this video ↗</button>`;
     $("#revise-video").onclick = () => {
       if (busy) return;
       $("#video-mode").value = p.plan.presenterAssetId
@@ -126,6 +128,7 @@ async function tick() {
     "#visual-pacing",
     "#text-density",
     "#visual-notes",
+    "#footage-mode",
   ])
     $(id).disabled =
       busy ||
@@ -353,6 +356,7 @@ $("#reasoning-effort").onchange = changeGeneration;
 
 function selectedCreativeBrief() {
   return {
+    footage: $("#footage-mode").value,
     webImagePercent: Number($("#web-image-share").value),
     explanationType: $("#explanation-type").value,
     pacing: $("#visual-pacing").value,
@@ -372,6 +376,7 @@ function applyCreativeBrief(brief) {
       Math.max(0, Math.min(100, brief.webImagePercent)),
     );
   for (const [id, key] of [
+    ["#footage-mode", "footage"],
     ["#explanation-type", "explanationType"],
     ["#visual-pacing", "pacing"],
     ["#text-density", "textDensity"],
@@ -389,6 +394,7 @@ for (const id of [
   "#visual-pacing",
   "#text-density",
   "#visual-notes",
+  "#footage-mode",
 ])
   $(id).addEventListener("input", saveCreativeBrief);
 try {
@@ -404,3 +410,15 @@ function showShotPlan(p) {
       : "") +
     `<ol>${scenes.map((s) => `<li><strong>${safe(s.title)}</strong>${s.shotKind ? `<span class="shot-kind">${safe(s.shotKind)}</span>` : ""}<p>${safe(s.visualIntent || "")}</p></li>`).join("")}</ol>`;
 }
+
+$("#copy-footage-credits").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("#footage-credits-text").value);
+    $("#credits-copy-status").textContent = "Copied";
+  } catch {
+    $("#footage-credits-text").focus();
+    $("#footage-credits-text").select();
+    $("#credits-copy-status").textContent =
+      "Select and copy the credits above.";
+  }
+};

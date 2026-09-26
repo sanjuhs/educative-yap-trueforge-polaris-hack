@@ -16,10 +16,7 @@ test("validates visual controls and gives zero-photo requests explicit sourcing 
   assert.match(message, /Do not search for or import internet images/);
   assert.match(message, /2–3 seconds/);
   assert.match(message, /Show a real browser layout/);
-  assert.match(
-    message,
-    /Moving B-roll\/video imports are not currently supported/,
-  );
+  assert.match(message, /Autonomously search YouTube/);
   for (const value of [-1, 101, 50.5])
     assert.equal(
       creativeBriefSchema.safeParse({ webImagePercent: value }).success,

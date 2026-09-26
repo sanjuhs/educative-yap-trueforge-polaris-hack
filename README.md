@@ -143,3 +143,7 @@ has its own license. Remotion is not installed in this first version.
 ## Choosing a model and estimating cost
 
 Choose Luna, Sol or Astra and a reasoning effort in the studio. The selection applies to both editing and visual review. The studio shows an illustrative 30-second budget before generation and measured token usage afterward. See [model options and cost accounting](docs/model-costs.md) for assumptions, rates and comparisons.
+
+## Autonomous YouTube B-roll
+
+Run `npm run setup:clips` once to install the optional clip tools, then restart the app. Leave **YouTube B-roll → Auto** enabled: the director finds sources, inspects 3–5 second excerpts, and integrates useful footage into the draft without asking for links. Each result includes downloadable, copyable footage credits with channel, title, URL, timestamps and permission-pending status. See [footage workflow and limits](docs/broll-roadmap.md).

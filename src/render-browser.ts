@@ -1,3 +1,4 @@
+import { clipDir, readClip } from "./video-clips.js";
 import { chromium, type Browser } from "playwright";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -62,11 +63,38 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
       },
     ],
   ]);
+  const clips = await Promise.all(
+    (input.plan.clipAssetIds || []).map(readClip),
+  );
+  const clipMap = new Map(clips.map((c) => [c.id, c]));
+  const csp = renderCsp.replace(
+    "img-src data: http://render.invalid/cafe.png;",
+    `img-src data: http://render.invalid/cafe.png ${clips.map((c) => `${renderOrigin}/clip-${c.id}/`).join(" ")};`,
+  );
   const blocked: string[] = [];
-  await context.route("**/*", (route) => {
+  await context.route("**/*", async (route) => {
     const url = new URL(route.request().url()),
       resource =
         url.origin === renderOrigin ? resources.get(url.pathname) : undefined;
+    const clipFrame = url.pathname.match(
+      /^\/clip-([a-f0-9-]{36})\/frame-(\d{3})\.jpg$/,
+    );
+    if (
+      url.origin === renderOrigin &&
+      clipFrame &&
+      route.request().method() === "GET"
+    ) {
+      const clip = clipMap.get(clipFrame[1]);
+      if (clip && Number(clipFrame[2]) < clip.frameCount) {
+        return route.fulfill({
+          body: await fs.readFile(
+            path.join(clipDir(clip.id), `frame-${clipFrame[2]}.jpg`),
+          ),
+          contentType: "image/jpeg",
+          headers: { "Access-Control-Allow-Origin": "*" },
+        });
+      }
+    }
     if (!resource || route.request().method() !== "GET") {
       blocked.push(url.origin + url.pathname);
       return route.abort();
@@ -74,7 +102,7 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
     return route.fulfill({
       ...resource,
       headers: {
-        "Content-Security-Policy": renderCsp,
+        "Content-Security-Policy": csp,
         "Access-Control-Allow-Origin": "*",
       },
     });
@@ -99,6 +127,15 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
       Array.from(document.images).map((i) => i.decode().catch(() => {})),
     );
   });
+  await page.evaluate((clips) => {
+    for (const el of document.querySelectorAll<HTMLImageElement>(
+      "img[data-clip-id]",
+    )) {
+      if (!clips.some((c) => c.id === el.dataset.clipId))
+        throw new Error("Declare every clip image ID in clipAssetIds.");
+      el.style.visibility = "hidden";
+    }
+  }, clips);
   const valid = await page.evaluate(
     () => typeof (window as any).renderFrame === "function",
   );
@@ -120,8 +157,40 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
   });
   async function seek(time: number) {
     await page.evaluate(
-      ({ time, duration, scenes, captions }) => {
+      async ({ time, duration, scenes, captions, clips }) => {
         (window as any).renderFrame(time, duration, scenes);
+        await Promise.all(
+          Array.from(
+            document.querySelectorAll<HTMLImageElement>("img[data-clip-id]"),
+          ).map(async (el) => {
+            const clip = clips.find((c) => c.id === el.dataset.clipId);
+            const index = Number(el.dataset.scene || "0"),
+              offset = Number(el.dataset.offset || "0");
+            if (
+              !clip ||
+              !Number.isInteger(index) ||
+              !scenes[index] ||
+              !Number.isFinite(offset) ||
+              offset < 0
+            )
+              throw new Error(
+                "Invalid clip placement: use a declared ID, valid data-scene and nonnegative data-offset.",
+              );
+            const local = time - scenes[index].start - offset;
+            const active =
+              local >= 0 &&
+              local < Math.min(clip.duration, scenes[index].duration - offset);
+            el.style.visibility = active ? "visible" : "hidden";
+            if (!active) return;
+            const frame = Math.min(
+              clip.frameCount - 1,
+              Math.floor(local * clip.fps + 1e-7),
+            );
+            const src = `/clip-${clip.id}/frame-${String(frame).padStart(3, "0")}.jpg`;
+            if (el.getAttribute("src") !== src) el.setAttribute("src", src);
+            await el.decode();
+          }),
+        );
         const caption = captions.find((c) => time >= c.start && time < c.end),
           el = document.getElementById("host-captions")!;
         el.textContent = caption?.text || "";
@@ -132,6 +201,7 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
         duration: input.duration,
         scenes: input.scenes,
         captions: input.captions,
+        clips,
       },
     );
     if (errors.length) throw new Error(errors.join("; ").slice(0, 1500));

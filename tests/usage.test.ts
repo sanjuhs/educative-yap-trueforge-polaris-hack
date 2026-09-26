@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimateTokens } from "../src/usage.js";
+import { estimateTokens, effectiveToolName } from "../src/usage.js";
 import { planSchema } from "../src/schema.js";
 
 test("prices cached tokens once and includes reasoning within output tokens", () => {
@@ -32,4 +32,30 @@ test("accounts for cache-write premiums separately from cache-read discounts", (
   assert.ok(Math.abs(e.cacheDiscountUsd - 0.0131125) < 1e-9);
   assert.equal(estimateTokens("gpt-5.4", 100, 200, 0, 50), undefined);
   assert.equal(estimateTokens("gpt-6-astra", 100, 200, 50, 51), undefined);
+});
+
+test("attributes renders routed through TrueForge's deferred call_tool wrapper", () => {
+  assert.equal(
+    effectiveToolName({ function: { name: "render_design" } }),
+    "render_design",
+  );
+  assert.equal(
+    effectiveToolName({
+      function: {
+        name: "call_tool",
+        arguments: JSON.stringify({
+          mcp_server: "video",
+          tool_name: "render_design",
+          input: { design_id: "example" },
+        }),
+      },
+    }),
+    "render_design",
+  );
+  assert.equal(
+    effectiveToolName({
+      function: { name: "call_tool", arguments: "not json" },
+    }),
+    undefined,
+  );
 });

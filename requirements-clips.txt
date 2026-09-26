@@ -1,0 +1,2 @@
+# Optional autonomous YouTube clip tools; install into .data/clip-tools.
+yt-dlp[default]==2026.8.19

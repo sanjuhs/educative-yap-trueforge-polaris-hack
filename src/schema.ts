@@ -1,3 +1,4 @@
+import { clipIdsSchema, type VideoClip } from "./video-clips.js";
 import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { motionSchema, placementSchema } from "./motion-schema.js";
 import { z } from "zod";
@@ -57,6 +58,7 @@ export const sceneSchema = z.object({
 export const planSchema = z
   .object({
     creativeBrief: creativeBriefSchema.optional(),
+    clipAssetIds: clipIdsSchema.optional(),
     motion: motionSchema.optional(),
     presenterMode: z.enum(["cutout", "split"]).optional(),
     presenterPlacement: placementSchema.optional(),
@@ -129,6 +131,7 @@ export type Project = {
   duration?: number;
   error?: string;
   audioModel?: string;
+  footage?: VideoClip[];
   visualReview?: {
     model: string;
     critique: string;

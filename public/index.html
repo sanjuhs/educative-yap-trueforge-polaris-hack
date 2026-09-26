@@ -102,8 +102,22 @@
               </div>
               <p class="muted">
                 Approximate screen-time target, not a fixed template. Photos can
-                carry animated overlays. Relevance comes first; moving footage
-                is a separate upcoming feature.
+                carry animated overlays. Relevance comes first. This mix applies
+                to the portions outside any B-roll inserts.
+              </p>
+              <label for="footage-mode">YouTube B-roll</label>
+              <select id="footage-mode">
+                <option value="auto">
+                  Auto · Find and use relevant excerpts
+                </option>
+                <option value="off">
+                  Off · Photos and original graphics only
+                </option>
+              </select>
+              <p class="muted">
+                The agent finds 3–5 second clips without links from you. Source
+                audio is muted. Creator, channel, video and timestamps are saved
+                in credits; permission stays pending.
               </p>
               <div class="model-controls">
                 <div>
@@ -219,6 +233,22 @@
           </div>
           <div id="video-actions"></div>
           <div id="usage-panel" class="usage-panel" aria-live="polite"></div>
+          <details id="footage-credits" class="shot-plan" hidden>
+            <summary>Footage credits · permission pending</summary>
+            <textarea
+              id="footage-credits-text"
+              readonly
+              rows="8"
+              aria-label="Footage credits for your description"
+            ></textarea
+            ><button
+              id="copy-footage-credits"
+              type="button"
+              class="text-button"
+            >
+              Copy credits</button
+            ><span id="credits-copy-status" role="status"></span>
+          </details>
           <details id="shot-plan" class="shot-plan" hidden>
             <summary>Shot plan & visual types</summary>
             <div id="shot-plan-content"></div>
