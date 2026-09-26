@@ -1,3 +1,11 @@
+import { createHash } from "node:crypto";
+import {
+  hostedEnabled,
+  currentOwner,
+  mcpSignature,
+  assertResource,
+  ownResource,
+} from "./hosted/integrations.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
@@ -89,7 +97,7 @@ export async function configureForge() {
       },
     });
   }
-  await ensureGenerationAgent(defaultGeneration());
+  if (!hostedEnabled) await ensureGenerationAgent(defaultGeneration());
 }
 
 const configured = new Map<string, Promise<string>>();
@@ -98,9 +106,16 @@ export function ensureGenerationAgent(
   settings: GenerationSettings,
 ): Promise<string> {
   const s = generationSchema.parse(settings);
-  const name = profileName(s);
+  const owner = currentOwner();
+  if (hostedEnabled && !owner)
+    throw new Error("Hosted generation requires an owner");
+  const name =
+    profileName(s) +
+    (owner
+      ? `-${createHash("sha256").update(owner).digest("hex").slice(0, 12)}`
+      : "");
   if (!configured.has(name)) {
-    const pending = configureProfile(name, s).catch((error) => {
+    const pending = configureProfile(name, s, owner).catch((error) => {
       configured.delete(name);
       throw error;
     });
@@ -108,19 +123,30 @@ export function ensureGenerationAgent(
   }
   return configured.get(name)!;
 }
-async function configureProfile(name: string, settings: GenerationSettings) {
+async function configureProfile(
+  name: string,
+  settings: GenerationSettings,
+  owner?: string,
+) {
   const servers = await forgeRequest("/settings/mcp-servers");
   const hasServer = (servers.data || []).some(
     (s: any) => s.name === name || s.manifest?.name === name,
   );
   const query = new URLSearchParams(settings);
+  if (owner) {
+    query.set("owner", owner);
+    query.set(
+      "signature",
+      mcpSignature(owner, settings.model, settings.reasoning),
+    );
+  }
   await forgeRequest("/settings/mcp-servers", hasServer ? "PUT" : "POST", {
     manifest: {
       type: "remote",
       name,
       description:
         "Original video design, web assets, local rendering and visual review.",
-      url: `${studioUrl}/mcp?${query}`,
+      url: `http://127.0.0.1:${config.port}/mcp?${query}`,
     },
   });
   const agents = await forgeRequest("/agents");
@@ -159,6 +185,7 @@ export async function generationSession(
   settings: GenerationSettings,
   previousId?: string,
 ) {
+  if (previousId) await assertResource("forge-session", previousId);
   const name = await ensureGenerationAgent(settings);
   const folder = path.join(config.data, "session-profiles");
   await fs.mkdir(folder, { recursive: true });
@@ -172,5 +199,6 @@ export async function generationSession(
   }
   const session = await forgeRequest("/sessions", "POST", { agent: { name } });
   await fs.writeFile(path.join(folder, session.data.id), name);
+  await ownResource("forge-session", session.data.id);
   return { id: session.data.id as string, reset: !!previousId };
 }

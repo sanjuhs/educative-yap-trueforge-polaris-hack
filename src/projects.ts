@@ -1,3 +1,5 @@
+import { hosted, currentOwner, enqueueRender } from "./hosted/integrations.js";
+import { renderAuthoredRemote } from "./modal-render.js";
 import { prepareNarration } from "./narration-timing.js";
 import { durationRange, MAX_VIDEO_SECONDS, renderTimeout } from "./duration.js";
 import { readClip, clipCredits } from "./video-clips.js";
@@ -14,7 +16,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import OpenAI from "openai";
-import { config, studioUrl } from "./config.js";
+import { config, publicStudioUrl } from "./config.js";
 import { composition } from "./composition.js";
 import {
   planSchema,
@@ -35,16 +37,56 @@ export async function save(project: Project) {
   await fs.writeFile(target + ".tmp", JSON.stringify(project, null, 2));
   await fs.rename(target + ".tmp", target);
   jobs.set(project.id, project);
+  if (hosted) {
+    const owner = currentOwner();
+    if (!owner)
+      throw new Error("Project persistence requires an authenticated owner");
+    await hosted.store.saveProject(owner, project.id, project);
+    if (project.status === "complete") {
+      const files: Record<string, string> = {};
+      const types: Record<string, string> = {
+        "video.mp4": "video/mp4",
+        "poster.jpg": "image/jpeg",
+        "storyboard.json": "application/json",
+        "probe.json": "application/json",
+        "sources.json": "application/json",
+        "clip-sources.json": "application/json",
+        "credits.txt": "text/plain",
+        "index.html": "text/html",
+        "project.json": "application/json",
+      };
+      for (const [name, contentType] of Object.entries(types)) {
+        const file = path.join(projectDir(project.id), name);
+        if (!(await fs.stat(file).catch(() => null))?.isFile()) continue;
+        files[name] = await hosted.storage.putFile(
+          owner,
+          project.id,
+          name,
+          file,
+          contentType,
+        );
+      }
+      await hosted.store.own(owner, "project", project.id, { files });
+      await hosted.store.saveVersion(owner, project.id, 1, project);
+    }
+  }
 }
 export async function restoreProjects() {
   await fs.mkdir(config.projects, { recursive: true });
+  if (hosted) {
+    const stored = await hosted.pool.query<{ payload: Project }>(
+      "SELECT payload FROM yap_projects ORDER BY created_at",
+    );
+    for (const { payload } of stored.rows) jobs.set(payload.id, payload);
+  }
   for (const name of await fs.readdir(config.projects)) {
     if (!/^[a-f0-9-]{36}$/.test(name)) continue;
     try {
       const p = JSON.parse(
         await fs.readFile(path.join(projectDir(name), "project.json"), "utf8"),
       ) as Project;
-      if (!["complete", "failed"].includes(p.status)) {
+      if (hosted && jobs.has(p.id)) continue; // Postgres is authoritative; disk is a working cache.
+      if (!config.hosted && !["complete", "failed"].includes(p.status)) {
         p.status = "failed";
         p.error =
           "The app stopped before this render completed. Create a new version to retry.";
@@ -72,24 +114,40 @@ export function publicProject(p: Project) {
     usage: projectUsage(p),
     creditsText: clipCredits(p.footage || []),
     clipSourcesUrl: p.footage?.length
-      ? `${studioUrl}/media/${p.id}/clip-sources.json`
+      ? `${publicStudioUrl}/media/${p.id}/clip-sources.json`
       : undefined,
     creditsUrl: p.footage?.length
-      ? `${studioUrl}/media/${p.id}/credits.txt`
+      ? `${publicStudioUrl}/media/${p.id}/credits.txt`
       : undefined,
     sourcesUrl: p.plan.visualAssetIds?.length
-      ? `${studioUrl}/media/${p.id}/sources.json`
+      ? `${publicStudioUrl}/media/${p.id}/sources.json`
       : undefined,
     videoUrl:
       p.status === "complete"
-        ? `${studioUrl}/media/${p.id}/video.mp4`
+        ? `${publicStudioUrl}/media/${p.id}/video.mp4`
         : undefined,
-    projectUrl: `${studioUrl}/?project=${p.id}`,
-    sourceUrl: p.scenes ? `${studioUrl}/media/${p.id}/index.html` : undefined,
+    projectUrl: `${publicStudioUrl}/?project=${p.id}`,
+    sourceUrl: p.scenes
+      ? `${publicStudioUrl}/media/${p.id}/index.html`
+      : undefined,
   };
 }
 export async function createProject(input: Plan) {
   const plan = planSchema.parse(input);
+  if (hosted) {
+    const owner = currentOwner();
+    if (!owner) throw new Error("An authenticated owner is required");
+    if (!plan.motion)
+      throw new Error(
+        "Hosted generation requires an authored motion design for isolated rendering",
+      );
+    for (const id of plan.clipAssetIds || [])
+      await hosted.store.assertOwn(owner, "clip", id);
+    for (const id of plan.visualAssetIds || [])
+      await hosted.store.assertOwn(owner, "image", id);
+    if (plan.presenterAssetId)
+      await hosted.store.assertOwn(owner, "presenter", plan.presenterAssetId);
+  }
   const footage = await Promise.all((plan.clipAssetIds || []).map(readClip));
   if (footage.length && !plan.motion)
     throw new Error("Footage requires an authored motion design.");
@@ -99,6 +157,7 @@ export async function createProject(input: Plan) {
   if (plan.presenterAssetId)
     presenterTimeline(plan, await getPresenter(plan.presenterAssetId));
   if (
+    !config.hosted &&
     listProjects().filter((p) => !["complete", "failed"].includes(p.status))
       .length >= 3
   )
@@ -120,7 +179,7 @@ export async function createProject(input: Plan) {
       JSON.stringify(
         {
           clips: footage,
-          note: "Permission pending. Uploader metadata does not verify rights ownership or historical identity.",
+          note: "Review each asset’s permissionStatus. Source metadata does not verify rights ownership or historical identity.",
         },
         null,
         2,
@@ -128,7 +187,8 @@ export async function createProject(input: Plan) {
     );
     await fs.writeFile(
       path.join(projectDir(project.id), "credits.txt"),
-      "FOOTAGE CREDITS — DRAFT / PERMISSION PENDING\n\n" + clipCredits(footage),
+      "FOOTAGE CREDITS — DRAFT / REVIEW SOURCE RIGHTS\n\n" +
+        clipCredits(footage),
     );
   }
   if (visualAssets.length) {
@@ -153,17 +213,19 @@ export async function createProject(input: Plan) {
       ),
     );
   }
-  queue = queue
-    .then(() => renderProject(project))
-    .catch(async (err) => {
-      project.status = "failed";
-      project.error = String(err.message || err).replaceAll(
-        config.apiKey || "__no_key__",
-        "[redacted]",
-      );
-      project.progress = "Render failed";
-      await save(project);
-    });
+  if (hosted) await enqueueRender(project.id);
+  else
+    queue = queue
+      .then(() => renderProject(project))
+      .catch(async (err) => {
+        project.status = "failed";
+        project.error = String(err.message || err).replaceAll(
+          config.apiKey || "__no_key__",
+          "[redacted]",
+        );
+        project.progress = "Render failed";
+        await save(project);
+      });
   return publicProject(project);
 }
 function ambient(duration: number) {
@@ -202,6 +264,8 @@ function ambient(duration: number) {
   return bytes;
 }
 export async function renderProject(p: Project) {
+  if (config.hosted && !p.plan.motion)
+    throw new Error("Hosted renderer requires an isolated authored design");
   const dir = projectDir(p.id),
     client = new OpenAI({
       apiKey: config.apiKey,
@@ -222,19 +286,28 @@ export async function renderProject(p: Project) {
     for (const [i, s] of p.plan.scenes.entries()) {
       p.progress = `Recording narration ${i + 1}/${p.plan.scenes.length}`;
       await save(p);
-      const response = await client.audio.speech.create({
-        model: config.ttsModel,
-        voice: p.plan.voice,
-        input: s.narration,
-        instructions:
-          "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
-        response_format: "wav",
-      });
       const audio = `voice-${i}.wav`;
-      await fs.writeFile(
-        path.join(dir, audio),
-        Buffer.from(await response.arrayBuffer()),
-      );
+      let cached = false;
+      try {
+        cached =
+          Number((await probe(path.join(dir, audio))).format.duration) > 0;
+      } catch {
+        /* First attempt or interrupted audio write. */
+      }
+      if (!cached) {
+        const response = await client.audio.speech.create({
+          model: config.ttsModel,
+          voice: p.plan.voice,
+          input: s.narration,
+          instructions:
+            "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
+          response_format: "wav",
+        });
+        await fs.writeFile(
+          path.join(dir, audio),
+          Buffer.from(await response.arrayBuffer()),
+        );
+      }
       const meta = await probe(path.join(dir, audio));
       const duration = Number(meta.format.duration) + 0.25;
       scenes.push({ ...s, start: cursor, duration, audio });
@@ -313,24 +386,25 @@ export async function renderProject(p: Project) {
     );
     p.progress = "Rendering your director’s original animation";
     await save(p);
-    await run(
-      process.execPath,
-      [
-        "--import",
-        "tsx",
-        path.join(config.root, "src/authored-worker.ts"),
-        dir,
-      ],
-      {
-        timeout: renderTimeout(cursor),
-        env: safeEnv,
-        onOutput: (text) => {
-          void fs
-            .appendFile(path.join(dir, "render.log"), text)
-            .catch(() => {});
-        },
-      },
-    );
+    const onOutput = (text: string) => {
+      void fs.appendFile(path.join(dir, "render.log"), text).catch(() => {});
+    };
+    if (config.hosted)
+      await renderAuthoredRemote(dir, {
+        timeoutMs: Math.max(renderTimeout(cursor), cursor * 6000 + 180000),
+        onOutput,
+      });
+    else
+      await run(
+        process.execPath,
+        [
+          "--import",
+          "tsx",
+          path.join(config.root, "src/authored-worker.ts"),
+          dir,
+        ],
+        { timeout: renderTimeout(cursor), env: safeEnv, onOutput },
+      );
     if (!presenter) {
       await run("ffmpeg", [
         "-v",

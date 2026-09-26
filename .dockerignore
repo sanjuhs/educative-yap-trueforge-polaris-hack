@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+example.env
+node_modules
+.data
+.trueforge
+web/.vercel
+web/.env*
+**/.DS_Store
+*.log
+coverage

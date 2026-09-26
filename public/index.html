@@ -12,11 +12,18 @@
       ><span class="edition">THE EXPLAINER STUDIO</span
       ><a
         id="forge-link"
+        hidden
         href="http://127.0.0.1:8790"
         target="_blank"
         rel="noreferrer"
         >Open TrueForge ↗</a
       >
+      <div id="account-controls" hidden>
+        <span id="account-email"></span
+        ><button id="manage-users" class="text-button" type="button" hidden>
+          Manage users</button
+        ><button id="logout" class="text-button" type="button">Log out</button>
+      </div>
     </header>
     <main>
       <section class="intro">
@@ -117,7 +124,7 @@
                 type="range"
                 min="0"
                 max="100"
-                step="10"
+                step="5"
                 value="40"
               />
               <div class="mix-endpoints">
@@ -125,11 +132,39 @@
                 ><span>Photo-led visuals</span>
               </div>
               <p class="muted">
-                Approximate screen-time target, not a fixed template. Photos can
-                carry animated overlays. Relevance comes first. This mix applies
-                to the portions outside any B-roll inserts.
+                Targets share the full video’s screen time. Photos and clips can
+                carry animated overlays; remaining time uses original graphics.
+                Relevance comes first.
               </p>
-              <label for="footage-mode">YouTube B-roll</label>
+              <label for="footage-share"
+                >YouTube / saved footage
+                <output id="footage-label" for="footage-share"
+                  >25%</output
+                ></label
+              >
+              <input
+                id="footage-share"
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value="25"
+                aria-describedby="visual-mix-hint"
+              />
+              <p id="visual-mix-hint" class="muted" aria-live="polite">
+                40% photos · 25% footage · 35% original graphics
+              </p>
+              <label for="opening-style">First 3–5 seconds</label>
+              <select id="opening-style">
+                <option value="auto">Let the director choose the hook</option>
+                <option value="clip-first">
+                  Start with a relevant video clip
+                </option>
+                <option value="dynamic-graphics">
+                  Start with dynamic original animation
+                </option>
+              </select>
+              <label for="footage-mode">Footage sourcing</label>
               <select id="footage-mode">
                 <option value="auto">
                   Auto · Find and use relevant excerpts
@@ -139,9 +174,10 @@
                 </option>
               </select>
               <p class="muted">
-                The agent finds 3–5 second clips without links from you. Source
-                audio is muted. Creator, channel, video and timestamps are saved
-                in credits; permission stays pending.
+                The agent checks saved clips first, then finds 3–5 second
+                YouTube excerpts without links from you. Source audio is muted.
+                Creator, channel, video and timestamps are saved in credits;
+                permission stays pending.
               </p>
               <div class="model-controls">
                 <div>
@@ -179,6 +215,51 @@
                 placeholder="Use actual browser interfaces, animate the CSS changes, avoid generic people typing. Keep labels short."
               ></textarea>
             </details>
+            <details id="asset-library-controls" class="creative-controls">
+              <summary>Your images &amp; B-roll</summary>
+              <p class="muted">
+                Upload screenshots, photographs and short clips. Select assets
+                for this video; your director decides how to arrange and animate
+                them.
+              </p>
+              <label for="library-files">Add images or clips</label>
+              <input
+                id="library-files"
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm"
+              />
+              <label for="library-description"
+                >What do these assets show?</label
+              >
+              <input
+                id="library-description"
+                type="text"
+                maxlength="500"
+                placeholder="CSS before and after, browser demo, historical footage…"
+              />
+              <p class="muted">
+                Up to 8 files per upload. Images up to 20 MB; clips up to 100
+                MB. Video imports use the first 5 seconds with source audio
+                muted.
+              </p>
+              <button
+                id="upload-library-assets"
+                type="button"
+                class="text-button"
+              >
+                Upload to my library ↑
+              </button>
+              <button
+                id="refresh-asset-library"
+                type="button"
+                class="text-button"
+              >
+                Refresh library ↻
+              </button>
+              <p id="library-upload-status" class="muted" role="status"></p>
+              <div id="asset-library-list" class="asset-library-list"></div>
+            </details>
             <div id="presenter-inputs" hidden>
               <p class="muted">
                 Your voice, inside a scene designed for your story.
@@ -194,7 +275,7 @@
               ><input id="presenter-video" type="file" accept="video/*" />
               <label for="presenter-voice">Separate voiceover (optional)</label
               ><input id="presenter-voice" type="file" accept="audio/*" />
-              <p class="muted">
+              <p id="presenter-privacy" class="muted">
                 3–60 seconds · up to 250 MB per file. A separate voiceover
                 replaces the video's audio and must already be aligned to it.
                 Background removal runs locally. OpenAI receives audio for
@@ -282,7 +363,7 @@
       <section class="library">
         <div class="library-title">
           <h2>Your little collection<span id="count">00</span></h2>
-          <span>MADE HERE. KEPT ON YOUR COMPUTER.</span>
+          <span id="storage-label">MADE HERE. KEPT ON YOUR COMPUTER.</span>
         </div>
         <div id="projects" class="project-grid">
           <p class="muted">Every idea starts somewhere. This is yours.</p>
@@ -290,9 +371,66 @@
       </section>
       <footer>
         <span>BUILT WITH TRUEFORGE + HYPERFRAMES</span
-        ><span>Your voice or AI narration · Local rendering</span>
+        ><span id="render-location"
+          >Your voice or AI narration · Local rendering</span
+        >
       </footer>
     </main>
+    <dialog id="login-dialog" class="account-dialog">
+      <form id="login-form">
+        <span class="kicker">EDUCATIVE YAP</span>
+        <h2>Your studio awaits.</h2>
+        <p>Sign in to create videos and revisit your collection.</p>
+        <label for="login-email">Email</label
+        ><input
+          id="login-email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          required
+        />
+        <label for="login-password">Password</label
+        ><input
+          id="login-password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <button id="login-submit" type="submit">Sign in ↗</button>
+        <p id="login-status" role="status"></p>
+      </form>
+    </dialog>
+    <dialog id="users-dialog" class="account-dialog">
+      <button id="close-users" class="text-button" type="button">
+        Close ×
+      </button>
+      <h2>Studio access</h2>
+      <div id="users-list"></div>
+      <form id="create-user-form">
+        <h3>Invite a creator</h3>
+        <p>Create a login and share its initial password privately.</p>
+        <label for="new-user-email">Email</label
+        ><input
+          id="new-user-email"
+          name="email"
+          type="email"
+          autocomplete="off"
+          required
+        />
+        <label for="new-user-password">Initial password</label
+        ><input
+          id="new-user-password"
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          minlength="10"
+          required
+        />
+        <button type="submit">Create account</button>
+        <p id="user-status" role="status"></p>
+      </form>
+    </dialog>
     <script src="/app.js" type="module"></script>
   </body>
 </html>

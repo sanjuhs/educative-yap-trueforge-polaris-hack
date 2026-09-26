@@ -52,7 +52,7 @@ header {
   font-size: 10px;
   letter-spacing: 2px;
 }
-header > a:last-child {
+header > #forge-link {
   margin-left: auto;
   font-size: 12px;
   text-decoration: none;
@@ -592,5 +592,136 @@ footer {
   padding: 2px 6px;
   border: 1px solid #d9d9ce;
   border-radius: 5px;
+  font-size: 11px;
+}
+
+[hidden] {
+  display: none !important;
+}
+#account-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+#account-email {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-dialog {
+  width: min(460px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 20px 90px #14241c33;
+}
+.account-dialog::backdrop {
+  background: #17261de0;
+  backdrop-filter: blur(8px);
+}
+.account-dialog h2 {
+  font:
+    42px/1.05 "Instrument Serif",
+    Georgia,
+    serif;
+  margin: 22px 0 12px;
+}
+.account-dialog p {
+  color: #64725c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.account-dialog label {
+  font-size: 13px;
+  margin: 20px 0 8px;
+}
+.account-dialog input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+.account-dialog button[type="submit"] {
+  width: 100%;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--ink);
+  color: white;
+}
+.account-dialog button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+#users-list ul {
+  padding: 0;
+  list-style: none;
+}
+#users-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#users-list li span {
+  margin-left: 8px;
+}
+#close-users {
+  float: right;
+}
+@media (max-width: 650px) {
+  #account-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px 12px;
+  }
+  #account-email {
+    width: 100%;
+    text-align: right;
+  }
+  header:has(#account-controls:not([hidden])) .edition {
+    display: none;
+  }
+}
+
+.asset-library-list {
+  max-height: 280px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.asset-library-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line, #d4d8ce);
+  border-radius: 8px;
+}
+.asset-library-item input {
+  width: auto;
+  margin-top: 4px;
+}
+.asset-library-item span {
+  min-width: 0;
+}
+.asset-library-item strong,
+.asset-library-item small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.asset-library-item small {
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 4px;
   font-size: 11px;
 }

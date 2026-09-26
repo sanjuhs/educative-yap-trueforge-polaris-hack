@@ -1,10 +1,20 @@
+import {
+  initializeHosted,
+  registerRenderHandler,
+  startHostedWorkers,
+} from "./hosted/integrations.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { config, studioUrl, forgeUrl } from "./config.js";
 import { run, stopMediaProcesses } from "./process.js";
-import { restoreProjects } from "./projects.js";
+import {
+  restoreProjects,
+  renderProject,
+  getProject,
+  save,
+} from "./projects.js";
 import { startServer } from "./server.js";
 import { configureForge } from "./trueforge.js";
 if (!config.apiKey || config.apiKey.includes("your-key"))
@@ -13,7 +23,25 @@ if (!config.apiKey || config.apiKey.includes("your-key"))
   );
 await Promise.all([run("ffmpeg", ["-version"]), run("ffprobe", ["-version"])]);
 await fs.mkdir(config.data, { recursive: true });
+await initializeHosted();
 await restoreProjects();
+registerRenderHandler(async (id) => {
+  const project = getProject(id);
+  if (project.status === "complete") return project;
+  try {
+    await renderProject(project);
+    return project;
+  } catch (error) {
+    project.status = "failed";
+    project.progress = "Render failed; retry is available";
+    project.error = String(
+      error instanceof Error ? error.message : error,
+    ).replaceAll(config.apiKey || "__no_key__", "[redacted]");
+    await save(project);
+    throw error;
+  }
+});
+let stopHostedWorkers: (() => void) | undefined;
 // Refuse to silently attach to a different TrueForge instance or its database.
 try {
   await fetch(`${forgeUrl}/api/v1/agents`, {
@@ -52,6 +80,7 @@ function stop(code = 0) {
   if (stopping) return;
   stopping = true;
   process.exitCode = code;
+  stopHostedWorkers?.();
   stopMediaProcesses();
   forge.kill("SIGTERM");
   studio.http.close();
@@ -86,6 +115,7 @@ try {
   if (!connected)
     throw new Error("TrueForge did not become ready. See .data/trueforge.log");
   await configureForge();
+  stopHostedWorkers = startHostedWorkers();
   studio.setReady();
   console.log(
     `\nEducative Yap is ready\nStudio: ${studioUrl}\nTrueForge: ${forgeUrl}\nModel: ${config.model}\nLocal projects: ${config.projects}\n`,

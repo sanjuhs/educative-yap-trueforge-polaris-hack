@@ -6,7 +6,7 @@ import { config } from "./config.js";
 
 export const visualAssetIdsSchema = z
   .array(z.string().regex(/^[a-f0-9]{64}$/))
-  .max(8)
+  .max(24)
   .default([]);
 export const visualAssetSchema = z.object({
   id: z.string().regex(/^[a-f0-9]{64}$/),
@@ -16,7 +16,11 @@ export const visualAssetSchema = z.object({
   imageUrl: z.string().url(),
   license: z.string(),
   licenseUrl: z.string(),
-  permissionStatus: z.literal("not-reviewed"),
+  permissionStatus: z.enum(["not-reviewed", "user-provided"]),
+  sourceType: z.enum(["web", "upload"]).optional(),
+  description: z.string().max(1200).optional(),
+  tags: z.array(z.string().max(60)).max(20).optional(),
+  originalFilename: z.string().max(200).optional(),
   retrievedAt: z.string(),
   contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
 });

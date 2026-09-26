@@ -9,7 +9,7 @@
 
 **Give it an idea—or a recording of yourself teaching. Get an original animated explainer with narration, captions, sourced visuals and an editable project.**
 
-[Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [How the agents-workflow works](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
+[Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [Agent workflow](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
 
 </div>
 
@@ -19,12 +19,12 @@
 
 Yap's director writes narration, designs shots, finds useful images or footage, writes the animation source, inspects rendered previews, repairs problems and exports a vertical video. A revision can change the whole design. There is no required scene-template catalog.
 
-| You direct | Yap creates |
-|---|---|
-| Topic, script or teaching notes | A narrated sequence of explanatory beats |
-| Your video and voice | Presenter cutout or split-screen explanation |
-| Duration, model, reasoning and visual preferences | A custom HTML/CSS/SVG/Canvas animation |
-| Feedback on the result | A new version with its own source and output |
+| You direct                                        | Yap creates                                  |
+| ------------------------------------------------- | -------------------------------------------- |
+| Topic, script or teaching notes                   | A narrated sequence of explanatory beats     |
+| Your video and voice                              | Presenter cutout or split-screen explanation |
+| Duration, model, reasoning and visual preferences | A custom HTML/CSS/SVG/Canvas animation       |
+| Feedback on the result                            | A new version with its own source and output |
 
 ## A real one-minute experiment
 
@@ -55,20 +55,22 @@ flowchart LR
   T -. trace and usage .-> H[Inspectable history]
 ```
 
-| TrueForge capability | How Yap uses it |
-|---|---|
-| Stateful agent sessions | Keep the brief, tool results and revision context together |
-| MCP tools | Source assets, inspect excerpts, preview designs and enqueue renders |
-| Model profiles | Choose Luna, Sol or Astra and reasoning effort per session |
-| Tool traces | Inspect decisions, tool calls, errors and visual critiques |
-| Agent/tool boundaries | Separate creative direction from trusted media operations |
-| Approval support | Available in the harness; current local tools do not publish or contact creators, and require no interactive approval |
+| TrueForge capability    | How Yap uses it                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Stateful agent sessions | Keep the brief, tool results and revision context together                                                            |
+| MCP tools               | Source assets, inspect excerpts, preview designs and enqueue renders                                                  |
+| Model profiles          | Choose Luna, Sol or Astra and reasoning effort per session                                                            |
+| Tool traces             | Inspect decisions, tool calls, errors and visual critiques                                                            |
+| Agent/tool boundaries   | Separate creative direction from trusted media operations                                                             |
+| Approval support        | Available in the harness; current local tools do not publish or contact creators, and require no interactive approval |
 
 **Multiple-agent design:** research, direction and critique are useful separate roles. Today, one TrueForge director coordinates dedicated visual-review model calls. Dynamic subagents are disabled in the shipped local profile. A future research/critic subagent can return evidence or feedback while only the director commits the final plan. This avoids competing edits and duplicated renders. We do not claim a multi-agent swarm or measured orchestration savings that the current code does not demonstrate.
 
 ## Creative control without fixed templates
 
 - **Custom motion:** causal diagrams, animated maps, procedural objects, camera movement and scene-specific compositions. The [animation skill](skills/animate-explainers/SKILL.md) is included in the director's instructions.
+- **Your own visual library:** upload screenshots, photos and short video clips, select assets for a brief, and let the director arrange them. Imports retain descriptions and source metadata for reuse.
+- **Visual mix and opening:** set a footage share, photo share, pacing, text density and opening preference—clip first, dynamic graphics or director’s choice.
 - **Real visual assets:** Wikimedia image search and optional autonomous YouTube excerpt search/import. No user-provided link is required. Relevance is checked from actual frames; metadata alone is not historical evidence.
 - **Your performance:** keep your original recording and voice, with background removal or a split-screen composition.
 - **Duration:** AI-voice targets from 5 seconds to 20 minutes in 5-second steps, aiming within ±6 seconds. Presenter uploads currently support 3–60 seconds.
@@ -123,7 +125,7 @@ flowchart TB
   MW --> R2
 ```
 
-**Hosted work is in progress until deployment and end-to-end verification are recorded.** Vercel serves the web experience; long-running agent and media work belongs in the backend/workers. Modal is integrated explicitly through Yap's tools/adapter, not represented as a built-in TrueForge sandbox provider. Never expose the local unauthenticated TrueForge interface publicly.
+**Hosted implementation:** authenticated accounts, owner-created users, Postgres history, durable jobs, encrypted R2 media and a persistent TrueForge volume. Deployment verification is recorded in [hosting](deployment/hosting.md). Vercel serves the web experience; long-running agent and media work belongs in the backend/workers. Modal is integrated explicitly through Yap's tools/adapter, not represented as a built-in TrueForge sandbox provider. Never expose the local unauthenticated TrueForge interface publicly. [Hosted environment example](deployment/hosted.env.example) · [R2, deployment and recovery guide](deployment/hosting.md) · [Isolated renderer](deployment/modal-renderer.md) · [Encrypted backup restore](deployment/runtime-backup.md).
 
 Future community, collaboration and mobile concepts are preserved in [product concepts](docs/product-concepts.md); they are not prerequisites for the creator studio or claims of shipped features.
 
@@ -131,15 +133,15 @@ Future community, collaboration and mobile concepts are preserved in [product co
 
 `example.env` and `.env.example` contain placeholders. Never commit `.env`, provider keys or personal recordings.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `OPENAI_API_KEY` | required | Planning, review and speech |
-| `OPENAI_MODEL` | `gpt-6-astra` | Default director |
-| `OPENAI_REASONING_EFFORT` | `high` | Default reasoning |
-| `OPENAI_TTS_MODEL` | `gpt-4o-mini-tts` | AI narration |
-| `CUTOUT_BACKEND` | `auto` | Presenter segmentation |
-| `STUDIO_PORT` / `PORT` | `8789` / `8790` | Local studio / TrueForge |
-| `SERVER_EXECUTION_TIMEOUT_SECONDS` | `1800` | Agent-turn execution allowance |
+| Variable                           | Default           | Purpose                        |
+| ---------------------------------- | ----------------- | ------------------------------ |
+| `OPENAI_API_KEY`                   | required          | Planning, review and speech    |
+| `OPENAI_MODEL`                     | `gpt-6-astra`     | Default director               |
+| `OPENAI_REASONING_EFFORT`          | `high`            | Default reasoning              |
+| `OPENAI_TTS_MODEL`                 | `gpt-4o-mini-tts` | AI narration                   |
+| `CUTOUT_BACKEND`                   | `auto`            | Presenter segmentation         |
+| `STUDIO_PORT` / `PORT`             | `8789` / `8790`   | Local studio / TrueForge       |
+| `SERVER_EXECUTION_TIMEOUT_SECONDS` | `1800`            | Agent-turn execution allowance |
 
 ```sh
 npm run check

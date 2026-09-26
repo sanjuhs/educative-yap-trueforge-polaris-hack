@@ -1,3 +1,4 @@
+import { renderAuthoredRemote } from "./modal-render.js";
 import { estimatedTimeline } from "./duration.js";
 import { clipIdsSchema } from "./video-clips.js";
 import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
@@ -118,11 +119,18 @@ export async function previewDesign(
       preview: true,
     }),
   );
-  await run(
-    process.execPath,
-    ["--import", "tsx", path.join(config.root, "src/authored-worker.ts"), dir],
-    { timeout: 120000, env: rendererEnv() },
-  );
+  if (config.hosted) await renderAuthoredRemote(dir, { timeoutMs: 360000 });
+  else
+    await run(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        path.join(config.root, "src/authored-worker.ts"),
+        dir,
+      ],
+      { timeout: 120000, env: rendererEnv() },
+    );
   const report = JSON.parse(
     await fs.readFile(path.join(dir, "preview.json"), "utf8"),
   );

@@ -1,0 +1,59 @@
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8789"
+    environment:
+      YAP_HOSTED: "true"
+      HOST: "0.0.0.0"
+      STUDIO_PORT: "8789"
+      PORT: "8790"
+      APP_ORIGIN: ${APP_ORIGIN}
+      PUBLIC_STUDIO_URL: ${PUBLIC_STUDIO_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-astra}
+      OPENAI_REASONING_EFFORT: ${OPENAI_REASONING_EFFORT:-high}
+      OPENAI_TTS_MODEL: ${OPENAI_TTS_MODEL:-gpt-4o-mini-tts}
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_PREFIX: ${R2_PREFIX:-educative-yap/}
+      R2_ENCRYPTION_KEY: ${R2_ENCRYPTION_KEY}
+      YAP_MCP_SECRET: ${YAP_MCP_SECRET}
+      YAP_MODAL_RENDER_URL: ${YAP_MODAL_RENDER_URL}
+      YAP_MODAL_RENDER_TOKEN: ${YAP_MODAL_RENDER_TOKEN}
+      OWNER_EMAIL: ${OWNER_EMAIL}
+      OWNER_PASSWORD: ${OWNER_PASSWORD}
+      YT_DLP_PATH: /opt/clip-tools/bin/yt-dlp
+      CUTOUT_BACKEND: mediapipe
+      GENERATION_CONCURRENCY: ${GENERATION_CONCURRENCY:-1}
+      GENERATION_USER_CONCURRENCY: ${GENERATION_USER_CONCURRENCY:-1}
+      GENERATION_MAX_QUEUED: ${GENERATION_MAX_QUEUED:-5}
+      GENERATION_MAX_VIDEO_SECONDS: ${GENERATION_MAX_VIDEO_SECONDS:-1200}
+    volumes:
+      - yap-data:/app/.data
+    networks:
+      - coolify
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8789/api/health').then(r=>r.json()).then(j=>process.exit(j.ready?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      start_period: 90s
+      retries: 5
+volumes:
+  yap-data:
+    name: educative-yap-data
+networks:
+  coolify:
+    external: true

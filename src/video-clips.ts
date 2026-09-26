@@ -6,16 +6,17 @@ import { config } from "./config.js";
 import { probe, rendererEnv, run } from "./process.js";
 
 export const youtubeIdSchema = z.string().regex(/^[A-Za-z0-9_-]{11}$/);
-export const clipIdsSchema = z.array(z.string().uuid()).max(6);
+export const clipIdsSchema = z.array(z.string().uuid()).max(24);
 export const clipRequestSchema = z.object({
   videoId: youtubeIdSchema,
   startSeconds: z.number().finite().min(0).max(14400),
   durationSeconds: z.number().min(3).max(5).default(4),
   purpose: z.string().min(1).max(500),
 });
-const clipSchema = z.object({
+export const clipSchema = z.object({
   id: z.string().uuid(),
-  videoId: youtubeIdSchema,
+  videoId: youtubeIdSchema.optional(),
+  sourceType: z.enum(["youtube", "upload"]).optional(),
   title: z.string(),
   channel: z.string(),
   channelUrl: z.string(),
@@ -29,7 +30,10 @@ const clipSchema = z.object({
   fps: z.literal(30),
   frameCount: z.number().int().positive().max(153),
   license: z.string(),
-  permissionStatus: z.literal("pending"),
+  permissionStatus: z.enum(["pending", "user-provided"]),
+  description: z.string().max(1200).optional(),
+  tags: z.array(z.string().max(60)).max(20).optional(),
+  originalFilename: z.string().max(200).optional(),
   retrievedAt: z.string(),
   purpose: z.string(),
   audio: z.literal("muted"),
@@ -285,9 +289,10 @@ async function importClip(input: z.output<typeof clipRequestSchema>) {
 }
 export function clipCredits(clips: VideoClip[]) {
   return clips
-    .map(
-      (c) =>
-        `• ${c.title}\n  Creator/uploader: ${c.creator}\n  Channel: ${c.channel}${c.channelUrl ? ` — ${c.channelUrl}` : ""}\n  Video: ${c.sourceUrl}\n  Excerpt: ${c.sourceStart.toFixed(2)}–${c.sourceEnd.toFixed(2)} seconds; audio muted\n  Source-reported license: ${c.license}\n  Permission: pending. Credits do not imply permission.\n  Used to illustrate: ${c.purpose}`,
+    .map((c) =>
+      c.sourceType === "upload"
+        ? `• ${c.title}\n  Source: User-uploaded file${c.originalFilename ? ` (${c.originalFilename})` : ""}\n  Excerpt: ${c.sourceStart.toFixed(2)}–${c.sourceEnd.toFixed(2)} seconds; audio muted\n  Rights: Supplied by the uploader; not independently verified.\n  Used to illustrate: ${c.purpose}`
+        : `• ${c.title}\n  Creator/uploader: ${c.creator}\n  Channel: ${c.channel}${c.channelUrl ? ` — ${c.channelUrl}` : ""}\n  Video: ${c.sourceUrl}\n  Excerpt: ${c.sourceStart.toFixed(2)}–${c.sourceEnd.toFixed(2)} seconds; audio muted\n  Source-reported license: ${c.license}\n  Permission: pending. Credits do not imply permission.\n  Used to illustrate: ${c.purpose}`,
     )
     .join("\n\n");
 }

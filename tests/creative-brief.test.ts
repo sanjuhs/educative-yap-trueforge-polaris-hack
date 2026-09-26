@@ -16,7 +16,7 @@ test("validates visual controls and gives zero-photo requests explicit sourcing 
   assert.match(message, /Do not search for or import internet images/);
   assert.match(message, /2–3 seconds/);
   assert.match(message, /Show a real browser layout/);
-  assert.match(message, /Autonomously search YouTube/);
+  assert.match(message, /autonomously search YouTube/i);
   for (const value of [-1, 101, 50.5])
     assert.equal(
       creativeBriefSchema.safeParse({ webImagePercent: value }).success,
@@ -58,4 +58,58 @@ test("keeps the brief and shot classification in exported plans without requirin
   assert.deepEqual(plan.creativeBrief, creativeBrief);
   assert.equal(plan.scenes[0].shotKind, "mixed");
   assert.match(creativeBriefMessage(creativeBrief), /soft editorial target/);
+});
+
+test("footage mix uses overall screen time and preserves legacy automatic briefs", () => {
+  const brief = creativeBriefSchema.parse({
+    webImagePercent: 30,
+    footagePercent: 50,
+    openingStyle: "clip-first",
+  });
+  const message = creativeBriefMessage(brief);
+  assert.match(message, /30% photos, 50% footage, about 20% original/);
+  assert.match(message, /search_saved_assets/);
+  assert.match(message, /beginning/);
+  assert.match(message, /not asset counts/);
+  assert.equal(
+    creativeBriefSchema.safeParse({ webImagePercent: 70, footagePercent: 40 })
+      .success,
+    false,
+  );
+  assert.equal(
+    creativeBriefSchema.safeParse({ webImagePercent: 100 }).success,
+    true,
+  );
+  assert.equal(
+    creativeBriefSchema.safeParse({
+      webImagePercent: 100,
+      footage: "off",
+      footagePercent: 50,
+    }).success,
+    true,
+  );
+  for (const footagePercent of [-1, 101, 10.5])
+    assert.equal(
+      creativeBriefSchema.safeParse({ footagePercent }).success,
+      false,
+    );
+  assert.equal(
+    creativeBriefSchema.safeParse({ openingStyle: "random" }).success,
+    false,
+  );
+});
+
+test("zero footage and disabled sourcing never prompt a clip search", () => {
+  for (const controls of [
+    { footagePercent: 0 },
+    { footage: "off", footagePercent: 40 },
+  ]) {
+    const message = creativeBriefMessage(
+      creativeBriefSchema.parse({ ...controls, openingStyle: "clip-first" }),
+    );
+    assert.match(message, /Do not search or import footage/);
+    assert.doesNotMatch(message, /search_youtube_clips/);
+    assert.match(message, /open with an original dynamic visual/);
+    assert.match(message, /0% footage/);
+  }
 });

@@ -7,6 +7,14 @@ let sessionId = sessionStorage.getItem("yap-session") || undefined,
   lastPreview = "",
   latestId;
 let presenterAssetId, revisionProjectId, generationOptions;
+let libraryAssets = [];
+const selectedAssetIds = new Set();
+let activeJob,
+  completedTurnId,
+  account,
+  csrfToken,
+  hosted = false,
+  authenticated = false;
 const safe = (s) =>
   String(s).replace(
     /[&<>"']/g,
@@ -16,7 +24,7 @@ const safe = (s) =>
       ],
   );
 async function api(url, body) {
-  const r = await fetch(
+  const r = await studioFetch(
     url,
     body
       ? {
@@ -129,6 +137,8 @@ async function tick() {
     "#text-density",
     "#visual-notes",
     "#footage-mode",
+    "#footage-share",
+    "#opening-style",
     "#target-duration",
   ])
     $(id).disabled =
@@ -137,14 +147,43 @@ async function tick() {
       (!generationOptions &&
         ["#director-model", "#reasoning-effort"].includes(id));
   try {
+    if (!authenticated) return;
     const health = await api("/api/health");
     $("#connection").textContent = health.ready
       ? "● TRUEFORGE CONNECTED"
       : "STARTING…";
-    $("#forge-link").href = health.forgeUrl;
+    $("#forge-link").hidden = hosted || !health.forgeUrl;
+    if (health.forgeUrl) $("#forge-link").href = health.forgeUrl;
     if (!generationOptions) await loadGenerationOptions();
     projects = await api("/api/projects");
     renderLibrary();
+    if (activeJob) {
+      const result = await api(`/api/jobs/${encodeURIComponent(activeJob)}`);
+      const job = result.job || result;
+      const checkpoint = job.result || job;
+      if (checkpoint.sessionId) sessionId = checkpoint.sessionId;
+      if (checkpoint.turnId && checkpoint.turnId !== completedTurnId)
+        activeTurn = checkpoint.turnId;
+      if (job.projectId) selectedId = job.projectId;
+      if (["failed", "cancelled", "interrupted"].includes(job.status)) {
+        activeJob = activeTurn = undefined;
+        busy = false;
+        $("#create").disabled = false;
+        activity(job.error || "This generation needs another try.", true);
+      } else if (["complete", "completed", "done"].includes(job.status)) {
+        activeJob = undefined;
+        if (!activeTurn) {
+          busy = false;
+          $("#create").disabled = false;
+          activity("Your video is ready in the collection.");
+        }
+      } else if (!activeTurn)
+        activity(
+          job.progress ||
+            "Your generation is queued. You can return to this page while the worker runs.",
+        );
+      persistRun();
+    }
     if (activeTurn) {
       const result = await api(`/api/turns/${sessionId}/${activeTurn}`);
       const turn = result.data;
@@ -162,13 +201,17 @@ async function tick() {
           "interrupted",
         ].includes(state.status)
       ) {
+        completedTurnId = activeTurn;
         activeTurn = undefined;
         sessionStorage.removeItem("yap-turn");
-        busy = false;
-        $("#create").disabled = false;
+        persistRun();
+        busy = !!activeJob;
+        $("#create").disabled = busy;
         activity(
           state.status === "failed"
-            ? "The agent hit an error. Check TrueForge for details or try again."
+            ? hosted
+              ? "The agent hit an error. The saved job retains its details; try a fresh generation."
+              : "The agent hit an error. Check TrueForge for details or try again."
             : "Your director has finished this step. Renders continue here automatically.",
           state.status === "failed",
         );
@@ -176,12 +219,13 @@ async function tick() {
     }
   } catch (err) {
     activity(err.message, true);
+  } finally {
+    setTimeout(tick, 2500);
   }
-  setTimeout(tick, 2500);
 }
 $("#prompt-form").onsubmit = async (event) => {
   event.preventDefault();
-  if (busy || !generationOptions) return;
+  if (busy || !generationOptions || !authenticated) return;
   const generation = selectedGeneration();
   const creativeBrief = selectedCreativeBrief();
   const presenterMode = $("#video-mode").value === "presenter";
@@ -206,7 +250,7 @@ $("#prompt-form").onsubmit = async (event) => {
       form.append("video", $("#presenter-video").files[0]);
       if ($("#presenter-voice").files[0])
         form.append("voiceover", $("#presenter-voice").files[0]);
-      const response = await fetch("/api/presenter", {
+      const response = await studioFetch("/api/presenter", {
         method: "POST",
         body: form,
       });
@@ -222,6 +266,7 @@ $("#prompt-form").onsubmit = async (event) => {
       sessionId,
       generation,
       creativeBrief,
+      selectedAssetIds: [...selectedAssetIds],
       ...(revisionProjectId ? { revisionProjectId } : {}),
       ...(presenterMode
         ? { presenterAssetId, presenterMode: $("#presenter-mode").value }
@@ -233,8 +278,11 @@ $("#prompt-form").onsubmit = async (event) => {
       );
     sessionId = result.sessionId;
     activeTurn = result.turnId;
-    sessionStorage.setItem("yap-session", sessionId);
-    sessionStorage.setItem("yap-turn", activeTurn);
+    completedTurnId = undefined;
+    activeJob = result.jobId;
+    if (sessionId) sessionStorage.setItem("yap-session", sessionId);
+    if (activeTurn) sessionStorage.setItem("yap-turn", activeTurn);
+    persistRun();
     $("#new-chat").hidden = false;
     $("#prompt").value = "";
     $("#prompt").placeholder =
@@ -254,13 +302,14 @@ $("#new-chat").onclick = () => {
   if (busy) return;
   sessionId = undefined;
   sessionStorage.removeItem("yap-session");
+  persistRun();
   $("#chat-log").textContent = "";
   $("#new-chat").hidden = true;
   activity("Fresh canvas. What should we explain next?");
 };
 $("#new-chat").hidden = !sessionId;
 $("#create").disabled = busy;
-void tick();
+void initializeStudio();
 
 function resetRecording() {
   presenterAssetId = undefined;
@@ -281,6 +330,7 @@ $("#video-mode").onchange = () => {
     : "9:16 · AI voice · Motion · MP4";
   sessionId = undefined;
   sessionStorage.removeItem("yap-session");
+  persistRun();
 };
 
 function showUsage(u) {
@@ -356,6 +406,7 @@ function changeGeneration() {
   localStorage.setItem("yap-generation", JSON.stringify(selectedGeneration()));
   sessionId = undefined;
   sessionStorage.removeItem("yap-session");
+  persistRun();
   $("#chat-log").textContent = "";
   $("#new-chat").hidden = true;
   updateBudget();
@@ -372,6 +423,11 @@ function selectedCreativeBrief() {
       ? {}
       : { targetDurationSeconds: Number($("#target-duration").value) }),
     footage: $("#footage-mode").value,
+    footagePercent:
+      $("#footage-mode").value === "off"
+        ? 0
+        : Number($("#footage-share").value),
+    openingStyle: $("#opening-style").value,
     webImagePercent: Number($("#web-image-share").value),
     explanationType: $("#explanation-type").value,
     pacing: $("#visual-pacing").value,
@@ -397,11 +453,26 @@ function updateDuration() {
     ? "Your recording sets the length; your original voice stays unchanged. Presenter uploads currently support 3–60 seconds."
     : `Target ${formatDuration(target)} · expected ${formatDuration(Math.max(1, target - 6))}–${formatDuration(target + 6)}. Longer videos add chapters and take more time to generate and render.`;
 }
-function saveCreativeBrief() {
+function saveCreativeBrief(event) {
+  const photo = $("#web-image-share");
+  const footage = $("#footage-share");
+  if (event?.target === footage && Number(footage.value) > 0)
+    $("#footage-mode").value = "auto";
+  if (
+    $("#footage-mode").value !== "off" &&
+    Number(photo.value) + Number(footage.value) > 100
+  ) {
+    if (event?.target === footage)
+      photo.value = String(100 - Number(footage.value));
+    else footage.value = String(100 - Number(photo.value));
+  }
   const brief = selectedCreativeBrief();
   updateDuration();
   updateBudget();
   $("#web-image-label").textContent = `${brief.webImagePercent}%`;
+  $("#footage-label").textContent = `${brief.footagePercent}%`;
+  $("#visual-mix-hint").textContent =
+    `${brief.webImagePercent}% photos · ${brief.footagePercent}% footage · ${100 - brief.webImagePercent - brief.footagePercent}% original graphics. Approximate targets; sources must fit the story.`;
   localStorage.setItem("yap-creative-brief", JSON.stringify(brief));
 }
 function applyCreativeBrief(brief) {
@@ -417,7 +488,12 @@ function applyCreativeBrief(brief) {
     $("#web-image-share").value = String(
       Math.max(0, Math.min(100, brief.webImagePercent)),
     );
+  if (Number.isFinite(brief.footagePercent))
+    $("#footage-share").value = String(
+      Math.max(0, Math.min(100, brief.footagePercent)),
+    );
   for (const [id, key] of [
+    ["#opening-style", "openingStyle"],
     ["#footage-mode", "footage"],
     ["#explanation-type", "explanationType"],
     ["#visual-pacing", "pacing"],
@@ -438,19 +514,21 @@ for (const id of [
   "#text-density",
   "#visual-notes",
   "#footage-mode",
+  "#footage-share",
+  "#opening-style",
 ])
   $(id).addEventListener("input", saveCreativeBrief);
 try {
   applyCreativeBrief(JSON.parse(localStorage.getItem("yap-creative-brief")));
 } catch {}
-updateDuration();
+saveCreativeBrief();
 function showShotPlan(p) {
   const scenes = p.plan.scenes || [];
   $("#shot-plan").hidden = !scenes.length;
   const brief = p.plan.creativeBrief;
   $("#shot-plan-content").innerHTML =
     (brief
-      ? `<p>Requested direction: ${brief.targetDurationSeconds ? `target ${formatDuration(brief.targetDurationSeconds)} (±6s) · ` : ""}${brief.webImagePercent}% photo-led screen time · ${safe(brief.explanationType)} · ${safe(brief.pacing)} pacing. Mix is a target, not a measured result.</p>`
+      ? `<p>Requested direction: ${brief.targetDurationSeconds ? `target ${formatDuration(brief.targetDurationSeconds)} (±6s) · ` : ""}${brief.webImagePercent}% photo-led · ${brief.footage === "off" ? "no" : brief.footagePercent === undefined ? "automatic" : `${brief.footagePercent}%`} footage · ${safe(brief.openingStyle || "auto")} opening · ${safe(brief.explanationType)} · ${safe(brief.pacing)} pacing. Mix is a target, not a measured result.</p>`
       : "") +
     `<ol>${scenes.map((s) => `<li><strong>${safe(s.title)}</strong>${s.shotKind ? `<span class="shot-kind">${safe(s.shotKind)}</span>` : ""}<p>${safe(s.visualIntent || "")}</p></li>`).join("")}</ol>`;
 }
@@ -464,5 +542,258 @@ $("#copy-footage-credits").onclick = async () => {
     $("#footage-credits-text").select();
     $("#credits-copy-status").textContent =
       "Select and copy the credits above.";
+  }
+};
+
+function runStorageKey() {
+  return `yap-active-run:${hosted ? account?.id || "signed-out" : "local"}`;
+}
+function persistRun() {
+  if (hosted && !account) return;
+  localStorage.setItem(
+    runStorageKey(),
+    JSON.stringify({
+      sessionId,
+      turnId: activeTurn,
+      jobId: activeJob,
+      completedTurnId,
+    }),
+  );
+}
+function restoreRun() {
+  if (hosted) sessionId = activeTurn = undefined;
+  try {
+    const saved = JSON.parse(localStorage.getItem(runStorageKey()));
+    if (saved) {
+      sessionId = saved.sessionId || undefined;
+      activeTurn = saved.turnId || undefined;
+      activeJob = saved.jobId || undefined;
+      completedTurnId = saved.completedTurnId || undefined;
+    }
+  } catch {}
+  busy = !!(activeTurn || activeJob);
+  $("#create").disabled = busy;
+  $("#new-chat").hidden = !sessionId;
+  if (busy)
+    activity(
+      "Reconnecting to your generation. Work continues even when this tab is closed.",
+    );
+}
+async function studioFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (
+    csrfToken &&
+    !["GET", "HEAD"].includes((options.method || "GET").toUpperCase())
+  )
+    headers.set("x-csrf-token", csrfToken);
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: "same-origin",
+  });
+  if (response.status === 401 && hosted) {
+    authenticated = false;
+    csrfToken = undefined;
+    $("#account-controls").hidden = true;
+    if (!$("#login-dialog").open) $("#login-dialog").showModal();
+  }
+  return response;
+}
+function applyAccount(result) {
+  account = result.user;
+  csrfToken = result.csrfToken;
+  authenticated = true;
+  $("#account-email").textContent = account.email;
+  $("#account-controls").hidden = false;
+  $("#manage-users").hidden = account.role !== "owner";
+  $("#login-dialog").close();
+  $("#login-password").value = "";
+  $("#login-status").textContent = "";
+  restoreRun();
+  selectedAssetIds.clear();
+  void refreshAssetLibrary();
+}
+async function initializeStudio() {
+  try {
+    const response = await fetch("/api/config", { credentials: "same-origin" });
+    if (response.ok) hosted = !!(await response.json()).hosted;
+    else if (response.status !== 404)
+      throw new Error(
+        "Studio configuration is unavailable. Reload to try again.",
+      );
+    if (hosted) {
+      $("#forge-link").hidden = true;
+      $("#storage-label").textContent = "YOUR PRIVATE CLOUD COLLECTION.";
+      $("#render-location").textContent =
+        "Your voice or AI narration · Cloud rendering";
+      $("#presenter-privacy").textContent =
+        "3–60 seconds · up to 250 MB per file. Files upload to this studio’s private backend; transcription and visual review send audio and still frames to the configured AI provider. A separate voiceover must already be aligned to your video.";
+      const session = await studioFetch("/api/auth/session");
+      if (session.ok) applyAccount(await session.json());
+      else if (session.status !== 401)
+        throw new Error("Sign-in is temporarily unavailable.");
+    } else {
+      authenticated = true;
+      restoreRun();
+      void refreshAssetLibrary();
+    }
+  } catch (error) {
+    activity(error.message, true);
+    $("#create").disabled = true;
+  }
+  void tick();
+}
+$("#login-dialog").addEventListener("cancel", (event) =>
+  event.preventDefault(),
+);
+$("#login-form").onsubmit = async (event) => {
+  event.preventDefault();
+  $("#login-submit").disabled = true;
+  $("#login-status").textContent = "Signing in…";
+  try {
+    const result = await api("/api/auth/login", {
+      email: $("#login-email").value.trim(),
+      password: $("#login-password").value,
+    });
+    applyAccount(result);
+    activity("Welcome back. Your collection is loading…");
+  } catch (error) {
+    $("#login-status").textContent = error.message;
+  } finally {
+    $("#login-submit").disabled = false;
+  }
+};
+$("#logout").onclick = async () => {
+  try {
+    await api("/api/auth/logout", {});
+    authenticated = false;
+    account = csrfToken = sessionId = activeTurn = activeJob = undefined;
+    sessionStorage.removeItem("yap-session");
+    sessionStorage.removeItem("yap-turn");
+    busy = false;
+    projects = [];
+    libraryAssets = [];
+    selectedAssetIds.clear();
+    $("#asset-library-list").replaceChildren();
+    lastPreview = latestId = selectedId = undefined;
+    $("#account-controls").hidden = true;
+    $("#projects").replaceChildren();
+    $("#preview").replaceChildren();
+    $("#video-actions").replaceChildren();
+    $("#usage-panel").replaceChildren();
+    $("#chat-log").textContent = "";
+    $("#footage-credits").hidden = $("#shot-plan").hidden = true;
+    $("#count").textContent = "00";
+    $("#create").disabled = true;
+    $("#login-dialog").showModal();
+    history.replaceState(null, "", location.pathname);
+  } catch (error) {
+    activity(error.message, true);
+  }
+};
+$("#close-users").onclick = () => $("#users-dialog").close();
+async function loadUsers() {
+  const result = await api("/api/auth/users");
+  $("#users-list").innerHTML =
+    `<ul>${result.users.map((user) => `<li>${safe(user.email)} <span class="muted">${safe(user.role)}</span></li>`).join("")}</ul>`;
+}
+$("#manage-users").onclick = async () => {
+  $("#users-dialog").showModal();
+  $("#user-status").textContent = "";
+  try {
+    await loadUsers();
+  } catch (error) {
+    $("#user-status").textContent = error.message;
+  }
+};
+$("#create-user-form").onsubmit = async (event) => {
+  event.preventDefault();
+  const submit = event.currentTarget.querySelector("button[type=submit]");
+  submit.disabled = true;
+  try {
+    const result = await api("/api/auth/users", {
+      email: $("#new-user-email").value.trim(),
+      password: $("#new-user-password").value,
+    });
+    $("#new-user-password").value = "";
+    $("#user-status").textContent =
+      `Account created for ${result.user.email}. Share the initial password privately.`;
+    await loadUsers();
+  } catch (error) {
+    $("#user-status").textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+};
+
+function showAssetLibrary() {
+  $("#asset-library-list").innerHTML = libraryAssets.length
+    ? libraryAssets
+        .map((asset) => {
+          const metadata = asset.metadata || asset;
+          const title =
+            metadata.title || metadata.originalFilename || "Untitled asset";
+          return `<label class="asset-library-item"><input type="checkbox" data-asset-id="${safe(asset.id)}" ${selectedAssetIds.has(asset.id) ? "checked" : ""}><span><strong>${safe(title)}</strong><small>${safe(asset.kind || metadata.kind || "asset")} · ${safe(metadata.description || metadata.purpose || metadata.channel || "Saved in your library")}</small></span></label>`;
+        })
+        .join("")
+    : '<p class="muted">Your imported and uploaded visuals will appear here.</p>';
+  for (const checkbox of document.querySelectorAll("[data-asset-id]"))
+    checkbox.onchange = () => {
+      if (checkbox.checked && selectedAssetIds.size >= 30) {
+        checkbox.checked = false;
+        $("#library-upload-status").textContent =
+          "Choose up to 30 assets for one video.";
+        return;
+      }
+      if (checkbox.checked) selectedAssetIds.add(checkbox.dataset.assetId);
+      else selectedAssetIds.delete(checkbox.dataset.assetId);
+    };
+}
+async function refreshAssetLibrary() {
+  if (!authenticated) return;
+  try {
+    const result = await api("/api/assets");
+    libraryAssets = Array.isArray(result) ? result : result.assets || [];
+    showAssetLibrary();
+  } catch (error) {
+    $("#library-upload-status").textContent = error.message;
+  }
+}
+$("#refresh-asset-library").onclick = refreshAssetLibrary;
+$("#upload-library-assets").onclick = async () => {
+  const files = [...$("#library-files").files];
+  if (!files.length) {
+    $("#library-upload-status").textContent = "Choose images or clips first.";
+    return;
+  }
+  if (files.length > 8) {
+    $("#library-upload-status").textContent = "Upload up to 8 files at a time.";
+    return;
+  }
+  const button = $("#upload-library-assets");
+  button.disabled = true;
+  $("#library-upload-status").textContent =
+    "Uploading and preparing your visuals…";
+  try {
+    const form = new FormData();
+    for (const file of files) form.append("files", file);
+    form.append("description", $("#library-description").value.trim());
+    const response = await studioFetch("/api/assets/upload", {
+      method: "POST",
+      body: form,
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Upload failed");
+    const assets = result.assets || [];
+    for (const asset of assets)
+      if (selectedAssetIds.size < 30) selectedAssetIds.add(asset.id);
+    $("#library-files").value = "";
+    $("#library-upload-status").textContent =
+      `${assets.length} asset${assets.length === 1 ? "" : "s"} ready and selected for your next video.`;
+    await refreshAssetLibrary();
+  } catch (error) {
+    $("#library-upload-status").textContent = error.message;
+  } finally {
+    button.disabled = false;
   }
 };
