@@ -1,6 +1,10 @@
 <div align="center">
 
-![Educative Yap — an AI director that makes the edit](docs/showcase/hero.svg)
+<a href="https://educative-yap.vercel.app"><img src="public/brand/yap-logo.png" alt="Yap — the explainer studio" width="236" height="134" /></a>
+
+# Big ideas. Little videos.
+
+### An AI director that makes the edit.
 
 [![MIT](https://img.shields.io/badge/license-MIT-86dcb9)](LICENSE)
 [![TrueForge](https://img.shields.io/badge/orchestrated_by-TrueForge-ff886b)](https://github.com/truefoundry/trueforge)
@@ -9,7 +13,9 @@
 
 **Give it an idea—or a recording of yourself teaching. Get an original animated explainer with narration, captions, sourced visuals and an editable project.**
 
-[Hosted studio · invite only](https://educative-yap.vercel.app) · [Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [Agent workflow](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
+[Open the studio ↗](https://educative-yap.vercel.app) · [Run with your own key](#run-it-locally) · [Inspect a real trace](docs/traces/korean-war.md) · [How costs work](#less-model-work-visible-costs)
+
+**Open source · Hosted preview is invite-only · Built for Agents That Act: TrueFoundry × Polaris**
 
 </div>
 
@@ -26,11 +32,24 @@ Yap's director writes narration, designs shots, finds useful images or footage, 
 | Duration, model, reasoning and visual preferences | A custom HTML/CSS/SVG/Canvas animation       |
 | Feedback on the result                            | A new version with its own source and output |
 
+## A production workflow you can revise
+
+1. **Brief the director.** Choose a topic or upload your teaching video, screenshots, photos or short clips. Set duration, visual mix, model and reasoning effort.
+2. **Watch it act.** TrueForge calls real tools to find assets, author animation code, run a restricted preview and inspect actual frames. Critiques feed back into source revisions.
+3. **Review the deliverable.** Play the MP4, inspect source credits and the AI cost estimate, and download the editable animation. Hosted jobs continue while the browser is closed.
+4. **Make the next cut.** Select **Revise this video** and ask, for example: “Keep the opening, make the labels larger, and explain the turning point more slowly.” The director reads the saved project, writes a revised design, previews it and exports another project. Earlier versions remain available.
+
+Useful workflows include teachers turning a lesson into a visual explanation, technical educators pairing their recording with diagrams, and product teams turning screenshots into narrated walkthroughs. These are intended uses; the [verified hosted run](deployment/demo-verification.md) demonstrates screenshot → agent → review → narration → Modal render → encrypted storage → playback.
+
+Publishing stays with the creator: review facts, captions and media permissions before sharing the downloaded video. There is no autonomous social-posting, purchasing or creator-outreach tool.
+
 ## A real one-minute experiment
 
 ![Frames from the generated Korean War experiment: changing fronts, civilian consequences and the armistice boundary](docs/showcase/korean-war.jpg)
 
 **60.17 seconds · eight beats · subtitles · two archival photographs · four seconds of sourced B-roll.**
+
+[Inspect the 27-event trace and repair sequence](docs/traces/korean-war.md) · [Download the sanitized JSON](docs/traces/korean-war.json).
 
 The experiment used GPT-6 Astra/high and approximately **$2.92** in recorded model usage plus audio estimates, including the interrupted run, revisions and audio checks. It exposed real problems: a ten-minute agent timeout, overlapping map labels, an omitted TTS sentence and approximate captions. The final artifact was repaired and checked. This is evidence from one experiment—not a promised price or proof that every generation is ready to publish.
 
@@ -64,7 +83,50 @@ flowchart LR
 | Agent/tool boundaries   | Separate creative direction from trusted media operations                                                             |
 | Approval support        | Available in the harness; current local tools do not publish or contact creators, and require no interactive approval |
 
-**Multiple-agent design:** research, direction and critique are useful separate roles. Today, one TrueForge director coordinates dedicated visual-review model calls. Dynamic subagents are disabled in the shipped profiles. A future research/critic subagent can return evidence or feedback while only the director commits the final plan. This avoids competing edits and duplicated renders. We do not claim a multi-agent swarm or measured orchestration savings that the current code does not demonstrate.
+One TrueForge director owns the creative session and coordinates dedicated visual-review calls. Dynamic subagents are disabled in the shipped profiles, keeping model selection and usage accounting predictable.
+
+### Inspect the agent, not just the final video
+
+```text
+search_web_images / search_youtube_clips  → find shot-specific sources
+import_web_image / import_youtube_clip    → retain provenance; inspect footage
+preview_design                           → run code, capture frames, visual critique
+  REVISE: overlapping labels and boundary → director rewrites the animation
+  REVISE: background obscures headings    → fix layering and map key
+  [initial turn times out; user continues the saved session]
+preview_design                           → READY, with remaining caveats
+render_design                            → queued project; worker takes over
+```
+
+This is a condensed sequence from the actual Korean War run, including its interruption. The [trace guide](docs/traces/korean-war.md) provides timestamps, exact tool evidence, cost math and instructions for inspecting your own runs. The final audio/caption repair was a separate manual audit, documented in the experiment.
+
+### Built for the hackathon's real-world job
+
+| Challenge                                      | Evidence in Yap                                                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Reach real systems                             | Authenticated API, Postgres jobs/history, encrypted R2 media, source search and Modal rendering                                 |
+| Execute generated code safely                  | Original HTML/CSS/JS runs in a disposable hosted renderer with blocked outbound networking and no injected provider credentials |
+| Complete a useful workflow                     | Input → assets → animation → review → revisions → narrated MP4, credits and editable source                                     |
+| Make actions inspectable                       | TrueForge events, saved designs, token categories and a sanitized recorded trace                                                |
+| Keep consequential actions under human control | Creator reviews and downloads the result; external publishing, purchases and outreach are outside the tool surface              |
+
+TrueForge supports approval flows, but Yap does not currently demonstrate a pause-and-approve publishing tool. The sandbox is implemented by Yap's Modal adapter. [Judge walkthrough](docs/launch.md#three-minute-judge-walkthrough) · [Implementation map](docs/architecture.md).
+
+## Less model work, visible costs
+
+Yap spends model tokens on direction and review. Browser rendering, FFmpeg export and progress polling make **zero additional model calls**. Revisions can reuse imported assets and the presenter's transcript. The director is instructed to bound visual repairs; the limit is guidance, not a hard spending cap.
+
+| Recorded example                                    | Approximate AI cost | What it proves                                                                |
+| --------------------------------------------------- | ------------------: | ----------------------------------------------------------------------------- |
+| Luna/medium HTML/CSS explainer                      |         **$0.0269** | One lower-cost run, including narration and two visual reviews                |
+| Astra/high hosted screenshot explainer, 9.4 seconds |           **$1.04** | Verified cloud generation, review, audio and export                           |
+| Astra/high Korean War experiment, 60.17 seconds     |           **$2.92** | Both recorded director turns, reviews, replacement narration and audio checks |
+
+These are different workloads, not a controlled model comparison or a per-video price promise. Compute, storage, network, licensing and unreported failed-call usage are excluded.
+
+In the Korean War record, 197,045 cache-read tokens and 63,228 cache-write tokens yield a **$1.6153 net caching discount**, after the write premium, versus ordinary uncached input pricing for the same recorded tokens. That is provider prompt-cache pricing—not a measured TrueFoundry-versus-alternative saving. The [trace cost calculation](docs/traces/korean-war.md#cost-you-can-check) makes the baseline explicit.
+
+The studio exposes model, effort, input/output tokens, cached reads, cache writes, reasoning, model/review counts and audio estimates. Unknown or incomplete usage stays unpriced. Estimates currently cover a generation turn, so earlier revisions must be added when reporting a whole project. Rates are sourced from [official OpenAI API pricing](https://developers.openai.com/api/docs/pricing), checked September 26, 2026. [Rate card and assumptions](docs/model-costs.md).
 
 ## Creative control without fixed templates
 
@@ -125,11 +187,25 @@ flowchart TB
   MW --> API
 ```
 
+**GitHub → live studio:** the public repository is linked to Vercel, with `main` as the production branch and `web` as the root. Vercel includes the shared `public/` files outside that root. Frontend pushes deploy automatically; the backend image workflow is separate. [Deployment details](web/README.md).
+
 **Hosted implementation:** authenticated accounts, owner-created users, Postgres history, durable jobs, encrypted R2 media and a persistent TrueForge volume. Deployment verification is recorded in [hosting](deployment/hosting.md). Vercel serves the web experience; long-running agent and media work belongs in the backend/workers. Modal is integrated explicitly through Yap's tools/adapter, not represented as a built-in TrueForge sandbox provider. Never expose the local unauthenticated TrueForge interface publicly. [Hosted environment example](deployment/hosted.env.example) · [R2, deployment and recovery guide](deployment/hosting.md) · [Isolated renderer](deployment/modal-renderer.md) · [Encrypted backup restore](deployment/runtime-backup.md).
 
 **Verified live on September 26, 2026:** a screenshot upload became a 9.4-second Astra/high explainer with narration and captions, rendered on Modal and played from encrypted R2. Its recorded AI estimate was **$1.04**, excluding hosting, storage and rendering compute. Twelve earlier projects were imported; all thirteen projects remained available after a backend restart. The one-minute Korean War video retained playback, credits and recorded cost history. A 12 MB personal video clip also uploaded successfully through the public studio. [Release evidence and limits](deployment/demo-verification.md).
 
 Future community, collaboration and mobile concepts are preserved in [product concepts](docs/product-concepts.md); they are not prerequisites for the creator studio or claims of shipped features.
+
+## Launch direction: your key or managed AI
+
+| Option                                | Status                                     | Intended experience                                                                                     |
+| ------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Local / self-hosted with your own key | **Available today**                        | Put your provider key in private server configuration and pay the provider directly                     |
+| Hosted per-user BYOK                  | **Planned**                                | Connect your own key to your account with isolated usage and revocation                                 |
+| Managed Yap subscription              | **Proposed: $20/month + metered AI usage** | Studio access plus itemized AI usage at published provider rates; separate platform fee and usage lines |
+
+The $20 proposal is a platform subscription, with AI usage charged separately; included credits and infrastructure allowances are still to be decided. Hosted BYOK, checkout, subscriptions and invoice-grade billing are not implemented. Today's cost panel is an estimate, not an invoice.
+
+Next launch targets: a custom domain and a Product Hunt launch, followed by hosted BYOK and managed billing. [Launch copy, demo script and implementation checklist](docs/launch.md).
 
 ## Configuration and development
 

@@ -1,0 +1,407 @@
+{
+  "title": "Korean War explainer: recorded TrueForge tool trace",
+  "date": "2026-09-26",
+  "model": "gpt-6-astra",
+  "reasoning": "high",
+  "provenance": "Selected fields exported from the locally saved initial-events.json, events.json and cost.json for this experiment. Timestamps, tool names, permitted arguments, results, critiques and usage are retained; this is not a full raw trace.",
+  "omitted": [
+    "user prompts",
+    "assistant prose",
+    "generated source",
+    "session, turn, call and resource identifiers",
+    "local URLs and paths",
+    "search result bodies"
+  ],
+  "scope": "Two director turns. Review usage in totals also includes direct visual-review calls. The later manual audio/caption repair is described separately in docs/experiments/korean-war.md.",
+  "turns": [
+    {
+      "label": "initial",
+      "source": "initial-events.json",
+      "events": [
+        {
+          "type": "turn.created",
+          "createdAt": "2026-09-26T09:30:43.078Z"
+        },
+        {
+          "type": "mcp.initialize",
+          "createdAt": "2026-09-26T09:30:43.090Z"
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:30:51.146Z",
+          "usage": {
+            "input_tokens": 6723,
+            "output_tokens": 247,
+            "cache_read_tokens": 5734,
+            "cache_write_tokens": 986
+          },
+          "tools": [
+            {
+              "name": "search_web_images",
+              "arguments": {
+                "query": "Korean War refugees 1950 1951 National Archives civilians"
+              }
+            },
+            {
+              "name": "search_web_images",
+              "arguments": {
+                "query": "Korean armistice agreement signing 27 July 1953 Panmunjom"
+              }
+            },
+            {
+              "name": "search_youtube_clips",
+              "arguments": {
+                "query": "National Archives Korean War 1950 UN forces archival Korea"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:30:52.663Z",
+          "tool": "search_web_images",
+          "resultCount": 0
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:30:52.607Z",
+          "tool": "search_web_images",
+          "resultCount": 7
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:30:52.586Z",
+          "tool": "search_youtube_clips",
+          "resultCount": 5
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:31:05.475Z",
+          "usage": {
+            "input_tokens": 8884,
+            "output_tokens": 703,
+            "cache_read_tokens": 6720,
+            "cache_write_tokens": 2161
+          },
+          "tools": [
+            {
+              "name": "import_youtube_clip",
+              "arguments": {
+                "videoId": "dKMfejn13lE",
+                "startSeconds": 30,
+                "durationSeconds": 4
+              }
+            },
+            {
+              "name": "search_web_images",
+              "arguments": {
+                "query": "Korean War refugees"
+              }
+            },
+            {
+              "name": "import_web_image",
+              "arguments": {
+                "title": "File:UN honour guard outside armistice building at Panmunjom.jpg"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:31:22.127Z",
+          "tool": "import_youtube_clip",
+          "result": {
+            "title": "The Korean Ceasefire Talks Begin",
+            "sourceUrl": "https://www.youtube.com/watch?v=dKMfejn13lE",
+            "sourceStart": 30,
+            "sourceEnd": 34,
+            "duration": 4,
+            "permissionStatus": "pending",
+            "visionReview": {
+              "model": "gpt-6-astra",
+              "reasoning": "high",
+              "critique": "PARTIAL — These black-and-white frames show a tracked armored vehicle on rough ground, initially beneath a dark opening. Other frames contain a circular inset/overlapping composition with the vehicle at center and people crowded around the edges, some apparently wearing military clothing.\n\nThis supports general wartime illustration, but no clear negotiations, meeting, or signing are visible. It therefore offers limited support for an inset specifically illustrating ceasefire talks and does not establish a 1953 signing, date, location, or archival provenance.\n\nNo visible title card, readable text, or watermark. No obvious gore or graphic injuries. The military-vehicle imagery is relevant to wartime context but not specifically to talks."
+            }
+          }
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:31:06.684Z",
+          "tool": "search_web_images",
+          "resultCount": 8
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:31:08.355Z",
+          "tool": "import_web_image",
+          "result": {
+            "title": "File:UN honour guard outside armistice building at Panmunjom.jpg",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:UN_honour_guard_outside_armistice_building_at_Panmunjom.jpg",
+            "permissionStatus": "not-reviewed"
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:31:37.060Z",
+          "usage": {
+            "input_tokens": 11995,
+            "output_tokens": 547,
+            "cache_read_tokens": 8881,
+            "cache_write_tokens": 3111
+          },
+          "tools": [
+            {
+              "name": "import_web_image",
+              "arguments": {
+                "title": "File:KoreanWarRefugeeWithBaby.jpg"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:31:39.873Z",
+          "tool": "import_web_image",
+          "result": {
+            "title": "File:KoreanWarRefugeeWithBaby.jpg",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:KoreanWarRefugeeWithBaby.jpg",
+            "permissionStatus": "not-reviewed"
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:35:15.049Z",
+          "usage": {
+            "input_tokens": 12830,
+            "output_tokens": 11789,
+            "cache_read_tokens": 11992,
+            "cache_write_tokens": 835
+          },
+          "tools": [
+            {
+              "name": "preview_design",
+              "arguments": {
+                "title": "Korea: The Front Moved, the Division Endured"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:35:36.107Z",
+          "tool": "preview_design",
+          "result": {
+            "ok": true,
+            "times": [1.8, 28.799999999999997, 49.199999999999996],
+            "blocked": [],
+            "visionReview": {
+              "model": "gpt-6-astra",
+              "reasoning": "high",
+              "critique": "REVISE\n\n1. **Clear map/text overlaps:** At 1.8s, the island outline overlaps “original divide.” At 28.8s, it overlaps “APPROXIMATE,” the peninsula touches the legend, and an arrow crosses “Seoul.” Reposition the legends and city label.\n2. **Correct the 1953 boundary graphic:** The red/blue territorial split diverges from the gold demarcation-line graphic, which ends inland on the east. Align the fills with the military demarcation line and extend it to the coast; identify the dashed 38th parallel in this panel.\n3. **Improve annotation readability:** At 49.2s, the DMZ legend is very faint and overlaps the map. Place it on clear background with stronger contrast. The photograph’s source strip is tiny, and the bottom credit visibly abbreviates a name with an ellipsis.\n\nI see two schematic Korea maps showing occupation zones and counteroffensive arrows, followed by an armistice-building photograph above a cropped boundary map."
+            }
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:37:20.026Z",
+          "usage": {
+            "input_tokens": 25036,
+            "output_tokens": 4486,
+            "cache_read_tokens": 12827,
+            "cache_write_tokens": 12206
+          },
+          "tools": [
+            {
+              "name": "preview_design",
+              "arguments": {
+                "title": "Korea — archival asset visual check"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:37:40.458Z",
+          "tool": "preview_design",
+          "result": {
+            "ok": true,
+            "times": [1.8, 28.799999999999997, 49.199999999999996],
+            "blocked": [],
+            "visionReview": {
+              "model": "gpt-6-astra",
+              "reasoning": "high",
+              "critique": "**READY — for the archival-asset inspection pass.**\n\n- **1.8s and 28.8s:** Both faces are clearly visible, with the tank recognizable behind them. The foreground figure’s lower body ends at the photograph’s bottom edge; no text or overlay obscures the subjects. Dark letterboxing preserves the displayed composition.\n- **49.2s:** The guards’ heads, feet and rifles are visible around the doorway. The embedded **“AUSTRALIAN WAR MEMORIAL / P04641.050”** strip is intact, though very small.\n- Titles and photographer credits are readable. The host’s bottom credit bar is smaller and visibly abbreviated at **“U.S. Army K…”**, but does not overlap either photograph. No obvious factual visual mismatch or unexplained added object is apparent.\n\nI see two identical previews of a black-and-white photograph of a young person carrying a child in front of a tank, followed by a colour photograph of uniformed guards outside a building."
+            }
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:39:43.655Z",
+          "usage": {
+            "input_tokens": 29942,
+            "output_tokens": 8486,
+            "cache_read_tokens": 25033,
+            "cache_write_tokens": 4906
+          },
+          "tools": [
+            {
+              "name": "preview_design",
+              "arguments": {
+                "title": "Korea: The Front Moved, the Division Endured"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:40:11.831Z",
+          "tool": "preview_design",
+          "result": {
+            "ok": true,
+            "times": [1.8, 28.799999999999997, 49.199999999999996],
+            "blocked": [],
+            "visionReview": {
+              "model": "gpt-6-astra",
+              "reasoning": "high",
+              "critique": "**REVISE**\n\n1. **1.8s and 28.8s:** A pale map layer crosses the headings, washing out their lower portions. Keep title text above that layer on settled cards; transition overlap alone is not a defect.\n2. **1.8s:** The legend promises a dashed 38th parallel, but only the red/blue boundary is visible on the peninsula. Add the matching dashed line.\n3. **28.8s:** Label the isolated white map dot; its meaning is unexplained.\n\nOther visible issues: “SOVIET” straddles the coastline, the bottom credits are ellipsized, and the photograph’s embedded credit is tiny. At 49.2s, the dashed 38th parallel and gold DMZ are clearly distinct; no clear historical error is evident.\n\nI see two north-up, red-and-blue schematic Korea maps followed by an armistice photograph above a cropped border map, with headings, legends and a bottom credit bar but no presenter."
+            }
+          }
+        },
+        {
+          "type": "turn.done",
+          "createdAt": "2026-09-26T09:40:43.091Z",
+          "state": {
+            "status": "cancelled",
+            "reason": "server-execution-timeout",
+            "completed_at": "2026-09-26T09:40:43.091Z",
+            "metrics": {
+              "total_input_tokens": 95410,
+              "total_output_tokens": 26258,
+              "total_tokens": 121668,
+              "total_cache_read_tokens": 71187,
+              "total_cache_write_tokens": 24205,
+              "total_reasoning_tokens": 10436
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "continued",
+      "source": "events.json",
+      "events": [
+        {
+          "type": "turn.created",
+          "createdAt": "2026-09-26T09:45:34.113Z"
+        },
+        {
+          "type": "mcp.initialize",
+          "createdAt": "2026-09-26T09:45:34.124Z"
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:47:15.611Z",
+          "usage": {
+            "input_tokens": 39494,
+            "output_tokens": 7689,
+            "cache_read_tokens": 38839,
+            "cache_write_tokens": 652
+          },
+          "tools": [
+            {
+              "name": "preview_design",
+              "arguments": {
+                "title": "Korea: The Front Moved, the Division Endured"
+              }
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:47:42.756Z",
+          "tool": "preview_design",
+          "result": {
+            "ok": true,
+            "times": [1.8, 28.799999999999997, 49.199999999999996],
+            "blocked": [],
+            "visionReview": {
+              "model": "gpt-6-astra",
+              "reasoning": "high",
+              "critique": "**READY** — Main headings and legends are readable, with no obvious unintended overlap or factual visual error. The dashed 38th parallel and gold DMZ are clearly distinct.\n\n- All frames: bottom credits are small and abbreviated at “U.S. Army K…,” not edge-clipped.\n- **28.8 s:** blue arrows—including one originating offshore—and the pale front band lack explicit labels.\n- **49.2 s:** the photograph’s embedded credit strip is tiny; the map is cropped at top and bottom but reads as a deliberate detail view.\n\nI see two north-up schematic maps of Korea, followed by an armistice-building photograph above a cropped map comparing the original divide with the DMZ."
+            }
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:47:45.448Z",
+          "usage": {
+            "input_tokens": 47531,
+            "output_tokens": 42,
+            "cache_read_tokens": 39491,
+            "cache_write_tokens": 8037
+          },
+          "tools": [
+            {
+              "name": "render_design",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "type": "tool.response",
+          "createdAt": "2026-09-26T09:47:45.460Z",
+          "tool": "render_design",
+          "result": {
+            "title": "Korea: The Front Moved, the Division Endured",
+            "status": "queued"
+          }
+        },
+        {
+          "type": "model.message",
+          "createdAt": "2026-09-26T09:47:50.159Z",
+          "usage": {
+            "input_tokens": 47672,
+            "output_tokens": 90,
+            "cache_read_tokens": 47528,
+            "cache_write_tokens": 141
+          }
+        },
+        {
+          "type": "turn.done",
+          "createdAt": "2026-09-26T09:47:50.161Z",
+          "state": {
+            "status": "done",
+            "completed_at": "2026-09-26T09:47:50.161Z",
+            "metrics": {
+              "total_input_tokens": 134697,
+              "total_output_tokens": 7821,
+              "total_tokens": 142518,
+              "total_cache_read_tokens": 125858,
+              "total_cache_write_tokens": 8830,
+              "total_reasoning_tokens": 516
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "cost": {
+    "directorAndVisualReviewsUsd": 2.891745,
+    "ttsDurationEstimateUsd": 0.016625,
+    "audioAuditEstimateUsd": 0.0078000000000000005,
+    "totalEstimatedUsd": 2.9161699999999997,
+    "metrics": {
+      "total_input_tokens": 260763,
+      "total_output_tokens": 37989,
+      "total_tokens": 298752,
+      "total_cache_read_tokens": 197045,
+      "total_cache_write_tokens": 63228,
+      "total_reasoning_tokens": 13927
+    },
+    "modelCalls": 14,
+    "visionCalls": 5,
+    "cacheRateCardDifferenceUsd": 1.615335,
+    "pricingDate": "2026-09-26",
+    "exclusions": "Local compute/storage/network, licensing, unreported usage from interrupted or failed requests, account discounts. This is an estimate from recorded usage, not an invoice. Cache rate-card difference is not a TrueFoundry savings benchmark."
+  }
+}

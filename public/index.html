@@ -4,11 +4,33 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Educative Yap — a little video, a big idea</title>
+    <meta
+      name="description"
+      content="Turn an idea or your own recording into an animated explainer. Yap's TrueForge director writes, previews, revises and renders—with source credits and visible AI cost estimates."
+    />
+    <meta name="theme-color" content="#f6f5ef" />
+    <meta property="og:title" content="Yap — Big ideas. Little videos." />
+    <meta
+      property="og:description"
+      content="An AI director that makes the edit. Original animation, narration, visual review and editable projects, powered by TrueForge."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://educative-yap.vercel.app/brand/yap-logo.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="Yap wordmark with an upward green arrow"
+    />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/png" href="/brand/yap-logo.png" />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <header>
-      <a class="logo" href="/">yap<span>↗</span></a
+      <a class="logo" href="/" aria-label="Yap home"
+        ><img src="/brand/yap-logo.png" alt="Yap" width="118" height="67" /></a
       ><span class="edition">THE EXPLAINER STUDIO</span
       ><a
         id="forge-link"
@@ -376,6 +398,11 @@
       </section>
       <footer>
         <span>BUILT WITH TRUEFORGE + HYPERFRAMES</span
+        ><a
+          href="https://github.com/sanjuhs/educative-yap-trueforge-polaris-hack"
+          target="_blank"
+          rel="noreferrer"
+          >SOURCE &amp; HOW IT WORKS ↗</a
         ><span id="render-location"
           >Your voice or AI narration · Local rendering</span
         >
@@ -383,9 +410,24 @@
     </main>
     <dialog id="login-dialog" class="account-dialog">
       <form id="login-form">
-        <span class="kicker">EDUCATIVE YAP</span>
+        <img
+          class="login-logo"
+          src="/brand/yap-logo.png"
+          alt="Yap"
+          width="118"
+          height="67"
+        />
         <h2>Your studio awaits.</h2>
         <p>Sign in to create videos and revisit your collection.</p>
+        <p class="muted">
+          Invite-only preview.
+          <a
+            href="https://github.com/sanjuhs/educative-yap-trueforge-polaris-hack#run-it-locally"
+            target="_blank"
+            rel="noreferrer"
+            >Explore the project or run it with your own key ↗</a
+          >
+        </p>
         <label for="login-email">Email</label
         ><input
           id="login-email"
