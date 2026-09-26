@@ -10,6 +10,7 @@ This operator migration preserves completed local videos, unfinished drafts, sou
    ```
 
    The script reads only its own `.data/projects`, `.data/visual-assets`, `.data/video-clips`, `.data/presenters`, `.data/designs` and `.data/usage` directories. It normalizes no files and never copies Make My Reels data. Media and the manifest use the dedicated private storage prefix and application AES-GCM encryption. A checkpoint records successful uploads so an interrupted export can be retried without sending unchanged files again.
+
 3. Set the emitted object key as backend `YAP_LEGACY_MANIFEST_KEY` and restart the standalone application. Startup invokes `importLegacyHistory()` after database/owner initialization and before restoring project/usage caches.
 4. Confirm imported counts in the server log and verify several saved videos, credits, usage figures and reusable assets through the authenticated application.
 

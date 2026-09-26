@@ -9,7 +9,7 @@ Educative Yap runs as its own application. It reuses infrastructure providers, n
 | Frontend              | `https://educative-yap.vercel.app` — static Vercel Build Output API deployment                              |
 | Backend               | `https://educative-yap-api.coolify.sanjayprasadhs.com` — dedicated Coolify application                      |
 | Database              | Dedicated PostgreSQL 16 database and user on Coolify’s internal network; no public database port            |
-| Persistent work files | Docker volume `educative-yap-data`, mounted at `/app/.data`                                                 |
+| Persistent work files | Docker volume `xswsgo0c8kck8cowkgg48cw8_yap-data`, mounted at `/app/.data`                                  |
 | AI orchestration      | TrueForge in the backend container, bound to loopback port 8790                                             |
 | Animation rendering   | Isolated Modal renderer; backend submits only selected job assets                                           |
 | Durable objects       | R2 under a Yap-specific prefix, encrypted before storage and retrieved through authenticated backend routes |
@@ -20,18 +20,19 @@ The Vercel deployment proxies only `/api/*` and `/media/*`. It does not publish 
 
 The root `Dockerfile` installs Node 22, FFmpeg, Chromium/Playwright, a separate Python environment for pinned yt-dlp, and the checksum-verified MediaPipe model. Runtime dependencies are built into the image. `.dockerignore` excludes environment files, local generations, dependencies and Git history.
 
-`compose.yaml` is the source of truth for the persistent volume. The current Coolify installation is `4.0.0-beta.380`; its application API does not expose the newer storage endpoints, and its custom Docker option converter ignores `--mount` and `--volume`. Therefore this application uses the `dockercompose` build pack, with `/compose.yaml` as its compose location. Do not replace the named volume with an anonymous container filesystem.
+`compose.yaml` is the source of truth for the persistent volume. The current Coolify installation is `4.0.0-beta.380`; its application API does not expose the newer storage endpoints, and its custom Docker option converter ignores `--mount` and `--volume`. The older platform also has a Git Compose application bug: its source check tries to change into a newly generated, nonexistent artifacts directory. The live deployment therefore uses a dedicated Compose **service**, with the same root `compose.yaml` and a remote Git build context pinned to a full 40-character commit SHA. This avoids changing or upgrading the shared Coolify installation. Do not replace the named volume with an anonymous container filesystem.
 
 The startup script initializes the model cache and runs Node as the unprivileged `node` user. TrueForge’s SQLite state, cached footage, downloaded images and working renders remain in `/app/.data` between container replacements. PostgreSQL stores hosted accounts, ownership, project history and jobs. Both stores must be included in recovery planning.
 
-In Coolify configure:
+For a current Coolify Git-based application, use this repository, branch `main`, base directory `/`, and Docker Compose location `/compose.yaml`. On the installed older platform, the live service uses the equivalent raw Compose configuration:
 
-- Repository: this repository, branch `main`.
-- Build pack: Docker Compose; base directory `/`; compose location `/compose.yaml`.
-- Service: `studio`; domain `https://educative-yap-api.coolify.sanjayprasadhs.com:8789`. The port suffix selects the internal service port; the public URL remains HTTPS on port 443.
+- Service name: `educative-yap-runtime`; Compose service key `studio`.
+- Build context: `https://github.com/sanjuhs/educative-yap-trueforge-polaris-hack.git#<full-commit-sha>`; Dockerfile `Dockerfile`. Short commit hashes are not sufficient for this Git build context.
+- Routing: Traefik HTTPS host rule for `https://educative-yap-api.coolify.sanjayprasadhs.com:8789`. The port suffix selects the internal service port; the public URL remains HTTPS on port 443.
 - External network: `coolify`, shared with the dedicated Yap PostgreSQL container.
+- A later release must update the pinned build context in this service’s Compose configuration and redeploy. A Git push alone does not update a pinned Compose service.
 - Health check: `GET /api/health` on port 8789. The image/compose health check requires JSON `ready: true`.
-- Persistent named volume: `educative-yap-data:/app/.data`.
+- Persistent named volume: Compose key `yap-data` mounted at `/app/.data`. The older Coolify parser namespaces the live volume as `xswsgo0c8kck8cowkgg48cw8_yap-data`; inspect the container’s mounts rather than assuming it retains the YAML `name` value.
 
 Apply runtime variables through Coolify’s secret environment configuration. Do not place secrets in the Dockerfile, compose source, browser JavaScript or Vercel build output.
 
@@ -51,8 +52,8 @@ Apply runtime variables through Coolify’s secret environment configuration. Do
 | `R2_PREFIX`                                                            | Yap-only object namespace, separate from other applications                                     |
 | `R2_ENCRYPTION_KEY`                                                    | Exactly 32 random bytes, encoded as 64 hexadecimal characters                                   |
 | `OWNER_EMAIL`, `OWNER_PASSWORD`                                        | First owner bootstrap; existing accounts are not reset by changing these variables              |
-| `GENERATION_CONCURRENCY`                                               | Worker concurrency; demo deployment starts at 1                                                 |
-| `GENERATION_USER_CONCURRENCY`                                          | Per-user concurrency; demo deployment starts at 1                                               |
+| `GENERATION_CONCURRENCY`                                               | Concurrency per generation/render stage; demo starts at 1                                       |
+| `GENERATION_USER_CONCURRENCY`                                          | Per-user concurrency per stage; demo starts at 1                                                |
 | `GENERATION_MAX_QUEUED`                                                | Queue limit; demo deployment starts at 5                                                        |
 
 Login creates an opaque, HttpOnly, Secure cookie. Mutating requests also require the session’s CSRF token and the configured Origin. Owner accounts can create creator accounts in the studio. Passwords are hashed with Argon2; no password or provider API key is stored in browser code.
@@ -67,7 +68,7 @@ A dedicated private bucket is the preferred operational setup:
 2. Keep the public `r2.dev` URL disabled. Do not attach a public custom domain.
 3. Create an R2 Object Read & Write credential scoped only to that bucket. Bucket administration is a separate permission from object access.
 4. Set the four R2 connection variables in the Yap backend’s runtime secrets. Keep the existing `R2_ENCRYPTION_KEY` when migrating existing encrypted objects.
-5. Copy the entire Yap object prefix to the new bucket without modifying object bytes or keys. Preserve the original source until restored playback and asset reuse are verified.
+5. Copy the entire Yap object prefix to the new bucket without modifying object bytes, keys, or custom metadata (the encryption nonce and authentication tag). Preserve the original source until restored playback and asset reuse are verified.
 6. Deploy, sign in, open an existing video, and verify playback and download. Test that signed-out and other-user requests cannot retrieve the project or media.
 
 Changing `R2_BUCKET` alone does not move existing objects. Retain the same prefix and encryption key during migration. New installations can start directly with a dedicated bucket.
@@ -92,7 +93,7 @@ Vercel external proxy requests have a 120-second timeout. Generation must remain
 Before upgrades, retain three coordinated backups:
 
 1. A PostgreSQL dump of the dedicated Yap database, including users, jobs, ownership and project history.
-2. A snapshot/archive of the `educative-yap-data` volume. Stop this application briefly, or use a SQLite-consistent backup method for its TrueForge database; copying a changing SQLite file without its journal is not a reliable backup.
+2. A snapshot/archive of the actual Yap data volume (currently `xswsgo0c8kck8cowkgg48cw8_yap-data`). Stop this application briefly, or use a SQLite-consistent backup method for its TrueForge database; copying a changing SQLite file without its journal is not a reliable backup.
 3. The Yap R2 object prefix plus the associated `R2_ENCRYPTION_KEY`, stored separately in a secure secret manager. Losing the key makes encrypted objects unreadable.
 
 Also record the Git commit, backend image revision and Vercel deployment URL. Git backups do not contain generated media, databases, uploads or credentials.

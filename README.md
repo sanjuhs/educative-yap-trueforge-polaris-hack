@@ -9,7 +9,7 @@
 
 **Give it an idea—or a recording of yourself teaching. Get an original animated explainer with narration, captions, sourced visuals and an editable project.**
 
-[Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [Agent workflow](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
+[Hosted studio · invite only](https://educative-yap.vercel.app) · [Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [Agent workflow](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
 
 </div>
 
@@ -64,7 +64,7 @@ flowchart LR
 | Agent/tool boundaries   | Separate creative direction from trusted media operations                                                             |
 | Approval support        | Available in the harness; current local tools do not publish or contact creators, and require no interactive approval |
 
-**Multiple-agent design:** research, direction and critique are useful separate roles. Today, one TrueForge director coordinates dedicated visual-review model calls. Dynamic subagents are disabled in the shipped local profile. A future research/critic subagent can return evidence or feedback while only the director commits the final plan. This avoids competing edits and duplicated renders. We do not claim a multi-agent swarm or measured orchestration savings that the current code does not demonstrate.
+**Multiple-agent design:** research, direction and critique are useful separate roles. Today, one TrueForge director coordinates dedicated visual-review model calls. Dynamic subagents are disabled in the shipped profiles. A future research/critic subagent can return evidence or feedback while only the director commits the final plan. This avoids competing edits and duplicated renders. We do not claim a multi-agent swarm or measured orchestration savings that the current code does not demonstrate.
 
 ## Creative control without fixed templates
 

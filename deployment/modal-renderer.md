@@ -31,6 +31,7 @@ sequenceDiagram
    ```
 
    The JSON has the shape `{"YAP_MODAL_RENDER_TOKEN":"<random-secret>"}`.
+
 4. Put the printed API URL in backend `YAP_MODAL_RENDER_URL`, and the same token in backend `YAP_MODAL_RENDER_TOKEN`. These are server-side variables, never `NEXT_PUBLIC_*` or browser configuration.
 5. Redeploy the Modal app when trusted renderer source or pinned dependencies change.
 
@@ -52,7 +53,7 @@ Inputs are limited to **100 MiB compressed / 250 MiB expanded**, outputs to **25
 
 ## Verification
 
-The deployed API is `https://sanjuhs123--educative-yap-renderer-api-v2.modal.run`; it requires the private backend token. On 2026-09-26, actual cloud tests passed: HTTP 401 without credentials, the network/credential isolation probe, three preview frames with backward-seek determinism, a 2-second 1080×1920 H.264 export, and previewing the existing 60-second Korean War plan with its two image assets and archival clip.
+The deployed API is `https://sanjuhs123--educative-yap-renderer-api-v2.modal.run`; it requires the private backend token. On 2026-09-26, actual cloud tests passed: HTTP 401 without credentials, the network/credential isolation probe, three preview frames with backward-seek determinism, a 2-second 1080×1920 H.264 export, previewing the existing 60-second Korean War plan with its two image assets and archival clip, its full 60.166667-second 1080×1920 H.264 cloud export, and a newly uploaded PNG plus user-provided 102-frame clip.
 
 ```sh
 python3 -m unittest discover -s modal

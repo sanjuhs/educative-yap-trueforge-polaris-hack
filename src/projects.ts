@@ -41,9 +41,15 @@ export async function save(project: Project) {
     const owner = currentOwner();
     if (!owner)
       throw new Error("Project persistence requires an authenticated owner");
-    await hosted.store.saveProject(owner, project.id, project);
     if (project.status === "complete") {
-      const files: Record<string, string> = {};
+      const previous = await hosted.store.resource(
+        owner,
+        "project",
+        project.id,
+      );
+      const files: Record<string, string> = {
+        ...((previous.metadata.files || {}) as Record<string, string>),
+      };
       const types: Record<string, string> = {
         "video.mp4": "video/mp4",
         "poster.jpg": "image/jpeg",
@@ -66,9 +72,14 @@ export async function save(project: Project) {
           contentType,
         );
       }
+      if (!files["video.mp4"])
+        throw new Error(
+          "Cannot finish a project without a persisted video artifact",
+        );
       await hosted.store.own(owner, "project", project.id, { files });
+      await hosted.store.saveProject(owner, project.id, project);
       await hosted.store.saveVersion(owner, project.id, 1, project);
-    }
+    } else await hosted.store.saveProject(owner, project.id, project);
   }
 }
 export async function restoreProjects() {

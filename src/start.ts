@@ -29,7 +29,10 @@ await importLegacyHistory();
 await restoreProjects();
 registerRenderHandler(async (id) => {
   const project = getProject(id);
-  if (project.status === "complete") return project;
+  if (project.status === "complete") {
+    await save(project); // Finish artifact/version publication after a recovered worker lease.
+    return project;
+  }
   try {
     await renderProject(project);
     return project;
