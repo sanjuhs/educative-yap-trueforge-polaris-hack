@@ -132,7 +132,8 @@ async function runGeneration(
   workerId: string,
   isAlive: () => boolean,
 ) {
-  const { forgeRequest, generationSession } = await import("../trueforge.js");
+  const { forgeRequest, forgeTurnEvents, generationSession } =
+    await import("../trueforge.js");
   const { watchUsage, effectiveToolName } = await import("../usage.js");
   const settings = generationSchema.parse(job.payload.generation);
   const state = (
@@ -198,15 +199,7 @@ async function runGeneration(
     const turnState = result.data?.state;
     const status = turnState?.status;
     if (status === "done" || status === "completed") {
-      const rows: any[] = [];
-      let page: string | undefined;
-      do {
-        const events = await forgeRequest(
-          `/sessions/${sessionId}/turns/${turnId}/events?limit=100${page ? `&page_token=${encodeURIComponent(page)}` : ""}`,
-        );
-        rows.push(...events.data.map((r: any) => r.event || r));
-        page = events.next_page_token;
-      } while (page);
+      const rows = await forgeTurnEvents(sessionId, turnId!);
       const calls = new Set(
         rows.flatMap((r: any) =>
           r.type === "model.message"

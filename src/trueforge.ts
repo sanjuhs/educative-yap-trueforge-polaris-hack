@@ -38,6 +38,28 @@ export async function forgeRequest(
   }
   return result;
 }
+export async function forgeTurnEvents(
+  sessionId: string,
+  turnId: string,
+  request: (endpoint: string) => Promise<any> = forgeRequest,
+) {
+  const rows: any[] = [];
+  const seen = new Set<string>();
+  let page: string | undefined;
+  do {
+    const events = await request(
+      `/sessions/${sessionId}/turns/${turnId}/events?limit=100${page ? `&page_token=${encodeURIComponent(page)}` : ""}`,
+    );
+    rows.push(...events.data.map((row: any) => row.event || row));
+    page = events.pagination?.next_page_token ?? events.next_page_token;
+    if (page) {
+      if (seen.has(page))
+        throw new Error("TrueForge repeated an events page token");
+      seen.add(page);
+    }
+  } while (page);
+  return rows;
+}
 export const agentName = "educative-yap";
 const animationSkill = await fs.readFile(
   path.join(config.root, "skills/animate-explainers/SKILL.md"),

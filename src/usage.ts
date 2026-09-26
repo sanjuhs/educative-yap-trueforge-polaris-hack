@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.js";
-import { forgeRequest } from "./trueforge.js";
+import { forgeRequest, forgeTurnEvents } from "./trueforge.js";
 import type { Project } from "./schema.js";
 
 import {
@@ -21,6 +21,7 @@ type Run = {
   visionModelCalls?: number;
   modelEstimateUsd?: number;
   cacheDiscountUsd?: number;
+  usageNote?: string;
   error?: string;
 };
 const runs = new Map<string, Run>();
@@ -71,6 +72,119 @@ export function estimateTokens(
       1e6,
   };
 }
+// TrueForge 0.2.1 counts context compaction in turn metrics, but does not
+// persist it as a model.message event. Our profiles use the director model
+// for compaction and disable subagents. Price the aggregate once, checking
+// both visible calls and the residual against the supported context tier.
+export function measureTurnUsage(
+  model: string,
+  totals: Record<string, number> | undefined,
+  rows: any[],
+) {
+  const messages = rows.filter((row) => row.type === "model.message");
+  const reviews = rows
+    .filter((row) => row.type === "tool.response")
+    .flatMap((row) => {
+      try {
+        const review = JSON.parse(row.content).visionReview;
+        return review?.usage ? [review] : [];
+      } catch {
+        return [];
+      }
+    });
+  const metrics = { ...totals };
+  const keys = [
+    "total_input_tokens",
+    "total_output_tokens",
+    "total_cache_read_tokens",
+    "total_cache_write_tokens",
+  ] as const;
+  const aggregate = keys.map((key, i) => totals?.[key] ?? (i > 1 ? 0 : NaN));
+  const nonnegative = (n: number) => Number.isSafeInteger(n) && n >= 0;
+  const callTokens = (u: any): number[] => [
+    u?.input_tokens,
+    u?.output_tokens,
+    u?.cache_read_tokens ?? u?.input_tokens_details?.cached_tokens ?? 0,
+    u?.cache_write_tokens ?? u?.input_tokens_details?.cache_write_tokens ?? 0,
+  ];
+  const validCall = (u: any) => {
+    const v = callTokens(u);
+    return v.every(nonnegative) && v[2] + v[3] <= v[0] && v[0] < 128000;
+  };
+  const visible = messages.reduce<number[]>(
+    (sum, row) => sum.map((n, i) => n + callTokens(row.usage)[i]),
+    [0, 0, 0, 0],
+  );
+  const residual = aggregate.map((n, i) => n - visible[i]);
+  const internalUsage = residual[0] > 0 || residual[1] > 0;
+  let error: string | undefined;
+  if (
+    !messages.length ||
+    !aggregate.every(nonnegative) ||
+    !residual.every(nonnegative) ||
+    residual[2] + residual[3] > residual[0]
+  ) {
+    error = "Turn totals and traced token usage are missing or inconsistent.";
+  } else if (
+    rows.some((row) => row.thread_id && row.thread_id !== "main") ||
+    messages.some((row) => row.thread_id !== "main") ||
+    reviews.some(
+      (review) =>
+        review.model !== model &&
+        !String(review.model).startsWith(model + "-20"),
+    )
+  ) {
+    error = "Dollar estimate unavailable for mixed-model or subagent usage.";
+  } else if (
+    messages.some((row) => !validCall(row.usage)) ||
+    reviews.some((review) => !validCall(review.usage)) ||
+    residual[0] >= 128000
+  ) {
+    error =
+      "Usage is incomplete or exceeds the supported short-context rate card.";
+  }
+  // Reviews run outside TrueForge. Add them once to its authoritative totals.
+  for (const review of reviews) {
+    const u = review.usage;
+    const tokens = callTokens(u);
+    keys.forEach((key, i) => {
+      metrics[key] = (metrics[key] || 0) + tokens[i];
+    });
+    metrics.total_tokens =
+      (metrics.total_tokens || 0) + u.input_tokens + u.output_tokens;
+    metrics.total_reasoning_tokens =
+      (metrics.total_reasoning_tokens || 0) +
+      (u.output_tokens_details?.reasoning_tokens || 0);
+  }
+  const price = error
+    ? undefined
+    : estimateTokens(model, ...(aggregate as [number, number, number, number]));
+  const reviewPrices = reviews.map((review) =>
+    estimateTokens(
+      model,
+      ...(callTokens(review.usage) as [number, number, number, number]),
+    ),
+  );
+  const priced = !!price && reviewPrices.every((value) => value !== undefined);
+  return {
+    metrics,
+    modelCalls: messages.length + reviews.length,
+    visionModelCalls: reviews.length,
+    modelEstimateUsd: priced
+      ? price.usd + reviewPrices.reduce((sum, value) => sum + value!.usd, 0)
+      : undefined,
+    cacheDiscountUsd: priced
+      ? price.cacheDiscountUsd +
+        reviewPrices.reduce((sum, value) => sum + value!.cacheDiscountUsd, 0)
+      : undefined,
+    usageNote: internalUsage
+      ? "Includes harness-internal usage such as context compaction from turn totals. Call counts cover traced messages and visual reviews."
+      : undefined,
+    error: priced
+      ? undefined
+      : error || "No supported rate card for this usage.",
+  };
+}
 async function persist(r: Run) {
   runs.set(r.turnId, r);
   await fs.mkdir(folder, { recursive: true });
@@ -108,15 +222,7 @@ async function monitor(r: Run) {
       setTimeout(() => void monitor(r), 3000).unref();
       return;
     }
-    const rows: any[] = [];
-    let page: string | undefined;
-    do {
-      const events = await forgeRequest(
-        `/sessions/${r.sessionId}/turns/${r.turnId}/events?limit=100${page ? `&page_token=${encodeURIComponent(page)}` : ""}`,
-      );
-      rows.push(...events.data.map((row: any) => row.event || row));
-      page = events.next_page_token;
-    } while (page);
+    const rows = await forgeTurnEvents(r.sessionId, r.turnId);
     const creationCalls = new Set(
       rows.flatMap((row) =>
         row.type === "model.message"
@@ -139,72 +245,8 @@ async function monitor(r: Run) {
           r.projectIds.push(p.id);
       } catch {}
     }
-    // The aggregate already includes cached and reasoning tokens: never add them again.
-    const reviews = rows
-      .filter((row) => row.type === "tool.response")
-      .flatMap((row) => {
-        try {
-          const v = JSON.parse(row.content).visionReview;
-          return v?.usage ? [v] : [];
-        } catch {
-          return [];
-        }
-      });
-    r.metrics = { ...turn.state.metrics };
-    r.visionModelCalls = reviews.length;
-    for (const review of reviews) {
-      const u = review.usage,
-        m = r.metrics!;
-      m.total_input_tokens = (m.total_input_tokens || 0) + u.input_tokens;
-      m.total_output_tokens = (m.total_output_tokens || 0) + u.output_tokens;
-      m.total_tokens = (m.total_tokens || 0) + u.total_tokens;
-      m.total_cache_read_tokens =
-        (m.total_cache_read_tokens || 0) +
-        (u.input_tokens_details?.cached_tokens || 0);
-      m.total_cache_write_tokens =
-        (m.total_cache_write_tokens || 0) +
-        (u.input_tokens_details?.cache_write_tokens || 0);
-      m.total_reasoning_tokens =
-        (m.total_reasoning_tokens || 0) +
-        (u.output_tokens_details?.reasoning_tokens || 0);
-    }
-    const messages = rows.filter(
-      (row: any) => row.type === "model.message" && row.usage,
-    );
-    r.modelCalls = messages.length + reviews.length;
-    const m = r.metrics;
-    const complete =
-      m &&
-      messages.reduce(
-        (n: number, row: any) => n + row.usage.input_tokens,
-        0,
-      ) === turn.state.metrics?.total_input_tokens;
-    // Unknown subagent models and long context need a different rate card.
-    const eligible =
-      complete &&
-      reviews.every(
-        (v) => v.model.startsWith(r.model) && v.usage.input_tokens < 128000,
-      ) &&
-      messages.every(
-        (row: any) =>
-          row.thread_id === "main" && row.usage.input_tokens < 128000,
-      );
-    const price = eligible
-      ? estimateTokens(
-          r.model,
-          m.total_input_tokens,
-          m.total_output_tokens,
-          m.total_cache_read_tokens || 0,
-          m.total_cache_write_tokens || 0,
-        )
-      : undefined;
-    r.modelEstimateUsd = price?.usd;
-    r.cacheDiscountUsd = price?.cacheDiscountUsd;
+    Object.assign(r, measureTurnUsage(r.model, turn.state.metrics, rows));
     r.status = turn.state.status === "done" ? "measured" : turn.state.status;
-    r.error = undefined;
-    if (!price)
-      r.error =
-        "Dollar estimate unavailable for incomplete, mixed-model or unsupported rate-card usage.";
     await persist(r);
   } catch (err) {
     r.error = String(err instanceof Error ? err.message : err).slice(0, 400);
