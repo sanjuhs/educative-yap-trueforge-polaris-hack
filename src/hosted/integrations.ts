@@ -236,10 +236,12 @@ async function runGeneration(
       }
       return { ...state, sessionId, turnId, projectIds, status: "completed" };
     }
-    if (["failed", "cancelled", "interrupted", "error"].includes(status))
+    if (["failed", "cancelled", "interrupted", "error"].includes(status)) {
+      await persist({ retryFromCompletedTurn: true });
       throw new Error(
         "The generation agent stopped before finishing. Inspect the saved trace and retry.",
       );
+    }
     await new Promise((resolve) => setTimeout(resolve, 2500));
   }
   throw new Error(

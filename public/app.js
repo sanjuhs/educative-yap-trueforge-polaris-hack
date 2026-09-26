@@ -733,7 +733,7 @@ function showAssetLibrary() {
           const metadata = asset.metadata || asset;
           const title =
             metadata.title || metadata.originalFilename || "Untitled asset";
-          return `<label class="asset-library-item"><input type="checkbox" data-asset-id="${safe(asset.id)}" ${selectedAssetIds.has(asset.id) ? "checked" : ""}><span><strong>${safe(title)}</strong><small>${safe(asset.kind || metadata.kind || "asset")} · ${safe(metadata.description || metadata.purpose || metadata.channel || "Saved in your library")}</small></span></label>`;
+          return `<label class="asset-library-item"><input type="checkbox" data-asset-id="${safe(asset.id)}" ${selectedAssetIds.has(asset.id) ? "checked" : ""}>${asset.kind === "image" ? `<img class="asset-library-thumb" loading="lazy" alt="" src="/api/assets/${safe(asset.id)}/content">` : '<span class="asset-library-thumb clip-marker" aria-hidden="true">▶</span>'}<span><strong>${safe(title)}</strong><small>${safe(asset.kind || metadata.kind || "asset")} · ${safe(metadata.description || metadata.purpose || metadata.channel || "Saved in your library")}</small></span></label>`;
         })
         .join("")
     : '<p class="muted">Your imported and uploaded visuals will appear here.</p>';
@@ -753,7 +753,9 @@ async function refreshAssetLibrary() {
   if (!authenticated) return;
   try {
     const result = await api("/api/assets");
-    libraryAssets = Array.isArray(result) ? result : result.assets || [];
+    libraryAssets = (
+      Array.isArray(result) ? result : result.assets || []
+    ).filter((asset) => ["image", "clip"].includes(asset.kind));
     showAssetLibrary();
   } catch (error) {
     $("#library-upload-status").textContent = error.message;

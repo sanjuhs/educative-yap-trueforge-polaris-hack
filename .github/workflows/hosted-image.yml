@@ -1,0 +1,36 @@
+name: Build hosted studio image
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - package.json
+      - package-lock.json
+      - src/**
+      - scripts/start-hosted.sh
+      - migrations/**
+      - .github/workflows/hosted-image.yml
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: hosted-image-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to GitHub Container Registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Build and publish immutable image
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          docker build --tag "$IMAGE:$GITHUB_SHA" --tag "$IMAGE:latest" .
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:latest"
