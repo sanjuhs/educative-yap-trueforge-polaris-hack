@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="960" viewBox="0 0 1600 960" role="img" aria-labelledby="title desc">
+  <title id="title">Open-source creator to share link to teaching community</title>
+  <desc id="desc">Phase one keeps creation local and lets a creator upload a selected finished video to a share service for private link-based feedback and collaboration. Phase two adds a separate public publishing path into Discover.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8f7f0"/><stop offset="1" stop-color="#edf0e5"/></linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5ed86"/><stop offset="1" stop-color="#a6c46b"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dce3f2"/><stop offset="1" stop-color="#e9def0"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#27372e" flood-opacity=".1"/></filter>
+  </defs>
+  <rect width="1600" height="960" rx="32" fill="url(#paper)"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="72" y="76" fill="#68804e" font-size="15" font-weight="700" letter-spacing="3">TRUEFORGE · PRODUCT ROADMAP</text>
+    <text x="72" y="130" fill="#202d27" font-family="Georgia, serif" font-style="italic" font-size="42">Make locally. Share by choice. Teach in public.</text>
+    <text x="1528" y="78" text-anchor="end" fill="#758078" font-size="11" letter-spacing="1">ROADMAP CONCEPT · NOT IMPLEMENTED</text>
+  </g>
+
+  <!-- Phase one -->
+  <rect x="64" y="180" width="1000" height="585" rx="24" fill="#203029"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="96" y="224" fill="#d5ed86" font-size="12" font-weight="700" letter-spacing="2">PHASE 1 · OPEN-SOURCE STUDIO + SHARING</text>
+    <text x="96" y="255" fill="#c3ccbe" font-size="13">Private by default. Upload only the finished version the creator chooses to share.</text>
+  </g>
+
+  <!-- Local workspace card -->
+  <g transform="translate(94 300)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="254" height="300" rx="18" fill="#fffef9" filter="url(#shadow)"/>
+    <rect x="18" y="18" width="218" height="112" rx="13" fill="url(#violet)"/>
+    <circle cx="171" cy="74" r="36" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2"/>
+    <path d="m159 74 9 9 18-21" fill="none" stroke="#506650" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="22" y="161" fill="#344239" font-size="15" font-weight="700">Make a lesson</text>
+    <text x="22" y="186" fill="#778275" font-size="11">Topic · presenter · mixed assets</text>
+    <text x="22" y="207" fill="#778275" font-size="11">Edit storyboard · render on device</text>
+    <rect x="18" y="231" width="218" height="48" rx="11" fill="#eef3e2"/>
+    <text x="127" y="251" text-anchor="middle" fill="#536b40" font-size="10" font-weight="700">PRIVATE PROJECT</text>
+    <text x="127" y="267" text-anchor="middle" fill="#778275" font-size="9">Source files stay local</text>
+  </g>
+
+  <path d="M363 450h58" stroke="#b9ce8c" stroke-width="2.5"/><path d="m412 442 12 8-12 8" fill="#b9ce8c"/>
+  <text x="393" y="430" text-anchor="middle" fill="#bfcbbb" font-family="Inter, sans-serif" font-size="9">creator opts in</text>
+
+  <!-- Share service card -->
+  <g transform="translate(438 300)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="254" height="300" rx="18" fill="#fffef9" filter="url(#shadow)"/>
+    <rect x="18" y="18" width="218" height="112" rx="13" fill="#eef3e2"/>
+    <circle cx="127" cy="74" r="33" fill="#d8e8b9"/>
+    <path d="M119 74h16m-8-8v16m21-8h17m-8-8v16" fill="none" stroke="#587047" stroke-width="2.3" stroke-linecap="round"/>
+    <text x="22" y="161" fill="#344239" font-size="15" font-weight="700">Share service</text>
+    <text x="22" y="186" fill="#778275" font-size="11">Hosted or self-hosted API</text>
+    <text x="22" y="207" fill="#778275" font-size="11">Version · token · permissions</text>
+    <rect x="18" y="231" width="218" height="48" rx="11" fill="#f3f4eb"/>
+    <text x="127" y="251" text-anchor="middle" fill="#536b40" font-size="10" font-weight="700">PRIVATE MEDIA STORAGE</text>
+    <text x="127" y="267" text-anchor="middle" fill="#778275" font-size="9">Only selected render uploaded</text>
+  </g>
+
+  <path d="M707 450h58" stroke="#b9ce8c" stroke-width="2.5"/><path d="m756 442 12 8-12 8" fill="#b9ce8c"/>
+  <text x="737" y="430" text-anchor="middle" fill="#bfcbbb" font-family="Inter, sans-serif" font-size="9">private link</text>
+
+  <!-- Collaboration card -->
+  <g transform="translate(782 300)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="248" height="300" rx="18" fill="#fffef9" filter="url(#shadow)"/>
+    <rect x="18" y="18" width="212" height="112" rx="13" fill="#f1eaf1"/>
+    <rect x="37" y="40" width="174" height="67" rx="10" fill="#fff"/>
+    <circle cx="55" cy="59" r="8" fill="#a7c46b"/><rect x="70" y="53" width="76" height="5" rx="2.5" fill="#cdd5c5"/><rect x="70" y="63" width="119" height="4" rx="2" fill="#e2e6dc"/>
+    <rect x="48" y="80" width="146" height="18" rx="8" fill="#edf3df"/><text x="121" y="92" text-anchor="middle" fill="#667a51" font-size="8">00:14 · clarify this example?</text>
+    <text x="22" y="161" fill="#344239" font-size="15" font-weight="700">Review together</text>
+    <text x="22" y="186" fill="#778275" font-size="11">Watch · comment · suggest</text>
+    <text x="22" y="207" fill="#778275" font-size="11">Owner publishes a new version</text>
+    <rect x="18" y="231" width="212" height="48" rx="11" fill="#eef3e2"/>
+    <text x="124" y="251" text-anchor="middle" fill="#536b40" font-size="10" font-weight="700">LINK ONLY · REVOCABLE</text>
+    <text x="124" y="267" text-anchor="middle" fill="#778275" font-size="9">Not listed in public search</text>
+  </g>
+
+  <rect x="94" y="636" width="936" height="1" fill="#506257"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="96" y="672" fill="#d5ed86" font-size="10" font-weight="700" letter-spacing="1">COLLABORATION STARTS LIGHT</text>
+    <text x="96" y="701" fill="#fffef9" font-size="13">Comments + versioned forks first; named editor access can follow.</text>
+    <text x="96" y="730" fill="#c3ccbe" font-size="10">A localhost app cannot issue a global URL: the share API must be reachable over HTTPS.</text>
+  </g>
+
+  <!-- Phase two -->
+  <rect x="1092" y="180" width="444" height="585" rx="24" fill="#fffef9" stroke="#dfe4d8" filter="url(#shadow)"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="1124" y="224" fill="#68804e" font-size="12" font-weight="700" letter-spacing="2">PHASE 2 · COMMUNITY</text>
+    <text x="1124" y="255" fill="#687568" font-size="12">Build public discovery on the sharing base.</text>
+    <rect x="1124" y="292" width="380" height="208" rx="16" fill="url(#violet)"/>
+    <circle cx="1370" cy="390" r="67" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>
+    <circle cx="1370" cy="390" r="46" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
+    <path d="M1370 448c-45-19-30-60-3-74 2 32 23 39 3 74z" fill="url(#green)"/>
+    <text x="1148" y="333" fill="#53634f" font-size="9" font-weight="700" letter-spacing="1">PUBLIC LESSON</text>
+    <text x="1148" y="421" fill="#28372f" font-family="Georgia,serif" font-size="20">Why leaves turn</text>
+    <text x="1148" y="446" fill="#28372f" font-family="Georgia,serif" font-size="20">gold in the fall</text>
+    <rect x="1124" y="520" width="380" height="68" rx="13" fill="#f3f4eb"/>
+    <text x="1146" y="547" fill="#344239" font-size="12" font-weight="700">Discover + creator profiles</text>
+    <text x="1146" y="568" fill="#778275" font-size="10">Topic search · follow · remix by permission</text>
+    <rect x="1124" y="603" width="380" height="68" rx="13" fill="#eef3e2"/>
+    <text x="1146" y="630" fill="#344239" font-size="12" font-weight="700">Separate Public publish action</text>
+    <text x="1146" y="651" fill="#778275" font-size="10">Only selected lessons enter the searchable catalog</text>
+    <text x="1124" y="713" fill="#828c7f" font-size="10">Profiles, moderation, and public feed are later scope.</text>
+  </g>
+
+  <rect x="64" y="807" width="1472" height="92" rx="18" fill="#e5eadd"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="94" y="844" fill="#536b40" font-size="10" font-weight="700" letter-spacing="1.2">SHARING RULES</text>
+    <text x="94" y="872" fill="#344239" font-size="13">Private by default · unguessable, revocable links · source assets stay private · public indexing requires a second opt-in</text>
+  </g>
+</svg>

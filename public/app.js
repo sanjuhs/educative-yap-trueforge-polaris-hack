@@ -49,7 +49,7 @@ function show(p) {
     $("#preview").innerHTML =
       `<video controls playsinline preload="metadata" poster="/media/${p.id}/poster.jpg" src="${safe(p.videoUrl)}"></video>`;
     $("#video-actions").innerHTML =
-      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Animation source ↗</a>${p.clipSourcesUrl ? `<a href="${safe(p.clipSourcesUrl)}" target="_blank">Footage sources ↗</a><a href="${safe(p.creditsUrl)}" download>Credits ↓</a>` : ""}<button type="button" id="revise-video" class="text-button">Revise this video ↗</button>`;
+      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Animation source ↗</a>${p.sourcesUrl ? `<a href="${safe(p.sourcesUrl)}" target="_blank">Image sources ↗</a>` : ""}${p.clipSourcesUrl ? `<a href="${safe(p.clipSourcesUrl)}" target="_blank">Footage sources ↗</a><a href="${safe(p.creditsUrl)}" download>Credits ↓</a>` : ""}<button type="button" id="revise-video" class="text-button">Revise this video ↗</button>`;
     $("#revise-video").onclick = () => {
       if (busy) return;
       $("#video-mode").value = p.plan.presenterAssetId

@@ -58,14 +58,55 @@ search connector. Preview review covers selected frames, not every possible
 frame, and automatic cutout edges can need refinement. There is no cloud
 deployment or multi-user authentication in this version.
 
-## Next increments
+## Roadmap: open-source sharing first, public community next
 
-1. Tune one specific educational series: pacing, typography, examples, and diagrams.
+The current application is a single-user localhost studio. It has no accounts,
+global share links, uploads to a shared service, collaboration, or public feed.
+The architecture below is a product direction, not an implemented deployment.
+
+### Phase 1 · Open-source creator studio + global review links
+
+Keep the creator's project and render local by default. Add an explicit
+“Share a finished video” action that uploads only the selected render and
+creator-approved title/description to a reachable share service. Return a
+stable page URL backed by a random access token that can expire or be revoked.
+The service should provide playback, versioned replacements, and time-coded
+comments. Start collaboration with viewer/commenter links and versioned forks;
+add named editor invites only after ownership and conflict rules are clear.
+
+Suggested service boundary:
+
+```text
+Local open-source studio + renderer
+  → authenticated share API (project owner, visibility, token, version)
+    → SQL metadata store (projects, versions, permissions, comments)
+    → private object storage (explicitly shared video only)
+      → signed playback URL on the share page
+```
+
+Keep uploaded source footage, voice tracks, transcripts, and editable project
+files local unless a creator separately selects them. Never expose provider
+keys to the browser or put media in the Git repository. A self-hostable API and
+storage adapter keep the project open source; an optional hosted service makes
+links globally reachable without requiring every collaborator to deploy it.
+
+### Phase 2 · Public teaching community
+
+Add a public catalog only after link sharing is reliable. A separate Public
+publish action adds selected metadata and the finished video to Discover; it
+does not change the access scope of private drafts or review links. Build
+profiles, topic search, follows, reporting/takedown, and opt-in remix rights on
+top of the catalog. Keep public catalog queries separate from private project
+and comment access checks.
+
+### Creator workflow improvements
+
+1. Tune one educational series: pacing, typography, examples, and diagrams.
 2. Add transcript corrections, manual audio offsets, and clip trimming.
 3. Add richer visual templates and editable storyboard controls.
 4. Add an optional isolated code-generation renderer and Remotion/Manim adapters.
-5. Containerize the worker; use TrueForge hosted mode with authentication,
-   Postgres/Redis, and object storage for shared deployments.
+5. Containerize the worker and add remote rendering only if local rendering
+   becomes a bottleneck; sharing a finished render does not require it.
 
 ## Upstream references
 

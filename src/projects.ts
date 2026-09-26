@@ -2,6 +2,7 @@ import { prepareNarration } from "./narration-timing.js";
 import { durationRange, MAX_VIDEO_SECONDS, renderTimeout } from "./duration.js";
 import { readClip, clipCredits } from "./video-clips.js";
 import { compositeCutout } from "./cutout.js";
+import { readVisualAsset, visualAssetPath } from "./visual-assets.js";
 import { authoredHtml } from "./render-browser.js";
 import { projectUsage } from "./usage.js";
 import {
@@ -76,6 +77,9 @@ export function publicProject(p: Project) {
     creditsUrl: p.footage?.length
       ? `${studioUrl}/media/${p.id}/credits.txt`
       : undefined,
+    sourcesUrl: p.plan.visualAssetIds?.length
+      ? `${studioUrl}/media/${p.id}/sources.json`
+      : undefined,
     videoUrl:
       p.status === "complete"
         ? `${studioUrl}/media/${p.id}/video.mp4`
@@ -89,6 +93,9 @@ export async function createProject(input: Plan) {
   const footage = await Promise.all((plan.clipAssetIds || []).map(readClip));
   if (footage.length && !plan.motion)
     throw new Error("Footage requires an authored motion design.");
+  const visualAssets = await Promise.all(
+    (plan.visualAssetIds || []).map(readVisualAsset),
+  );
   if (plan.presenterAssetId)
     presenterTimeline(plan, await getPresenter(plan.presenterAssetId));
   if (
@@ -122,6 +129,28 @@ export async function createProject(input: Plan) {
     await fs.writeFile(
       path.join(projectDir(project.id), "credits.txt"),
       "FOOTAGE CREDITS — DRAFT / PERMISSION PENDING\n\n" + clipCredits(footage),
+    );
+  }
+  if (visualAssets.length) {
+    await fs.writeFile(
+      path.join(projectDir(project.id), "sources.json"),
+      JSON.stringify(
+        {
+          purpose:
+            "Creative preview; source permissions have not been independently reviewed",
+          assets: visualAssets,
+        },
+        null,
+        2,
+      ),
+    );
+    await Promise.all(
+      visualAssets.map((a) =>
+        fs.copyFile(
+          visualAssetPath(a.id),
+          path.join(projectDir(project.id), `visual-${a.id}`),
+        ),
+      ),
     );
   }
   queue = queue

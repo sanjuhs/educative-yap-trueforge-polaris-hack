@@ -292,9 +292,10 @@ export function projectUsage(p: Project) {
     pricingSource: "https://developers.openai.com/api/docs/pricing",
     exclusions:
       "Bundled image creation, clip licensing fees, local compute/storage/network, failed/retried API attempts and account-specific discounts. No TrueFoundry savings benchmark yet.",
-    imageAsset:
-      p.plan.motion?.html.includes("cafe.png") ||
-      p.plan.scenes.some((s) => ["web", "photo"].includes(s.visual))
+    imageAsset: p.plan.visualAssetIds?.length
+      ? "Imported internet images; no image generation call. Source details accompany the video."
+      : p.plan.motion?.html.includes("cafe.png") ||
+          p.plan.scenes.some((s) => ["web", "photo"].includes(s.visual))
         ? "Reused bundled AI photo; no per-video image generation call"
         : undefined,
     renderingModelCalls: 0,

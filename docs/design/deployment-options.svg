@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Three deployment paths for Educative Yap</title>
+  <desc id="desc">A comparison of local single-user deployment, a recommended hybrid private beta, and a hosted multi-user service.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8f7f0"/><stop offset="1" stop-color="#edf0e5"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5ed86"/><stop offset="1" stop-color="#a8c76b"/></linearGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5edf9"/><stop offset="1" stop-color="#d8e4f3"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="145%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#2d3b30" flood-opacity=".09"/></filter>
+  </defs>
+  <rect width="1500" height="1000" rx="32" fill="url(#bg)"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="74" y="78" fill="#68804e" font-size="14" font-weight="700" letter-spacing="3">DEPLOYMENT PATHS</text>
+    <text x="74" y="126" fill="#202d27" font-family="Georgia, serif" font-style="italic" font-size="35">Grow the service when the workflow earns it.</text>
+    <text x="1424" y="83" text-anchor="end" fill="#778178" font-size="11" letter-spacing="1.1">CONCEPT ARCHITECTURE</text>
+  </g>
+
+  <!-- LOCAL -->
+  <g transform="translate(62 168)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="440" height="650" rx="22" fill="#fffef9" stroke="#dfe3d7" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="440" height="8" rx="4" fill="#98ae70"/>
+    <text x="28" y="49" fill="#75816f" font-size="10" font-weight="700" letter-spacing="1.5">NOW · ONE CREATOR</text>
+    <text x="28" y="84" fill="#203029" font-family="Georgia, serif" font-size="27">Local studio</text>
+    <rect x="28" y="105" width="384" height="335" rx="16" fill="#f3f4eb" stroke="#e3e6db"/>
+    <rect x="85" y="128" width="270" height="64" rx="12" fill="#fffef9" stroke="#d8dfcf"/>
+    <circle cx="111" cy="160" r="13" fill="#e7eddc"/><rect x="104" y="153" width="14" height="13" rx="3" fill="none" stroke="#647753" stroke-width="1.6"/><path d="M108 163l4-4 4 4" fill="none" stroke="#647753" stroke-width="1.3"/>
+    <text x="139" y="155" fill="#344239" font-size="12" font-weight="600">Browser + studio</text><text x="139" y="174" fill="#859082" font-size="10">127.0.0.1 · private</text>
+    <path d="M220 193v24" stroke="#90a27b" stroke-width="2"/><path d="m214 213 6 8 6-8" fill="#90a27b"/>
+    <rect x="62" y="224" width="316" height="109" rx="14" fill="#203029"/>
+    <text x="220" y="254" text-anchor="middle" fill="#d5ed86" font-size="10" font-weight="700" letter-spacing="1">ONE PRIVATE MACHINE</text>
+    <rect x="78" y="270" width="120" height="42" rx="8" fill="#314239"/><rect x="209" y="270" width="151" height="42" rx="8" fill="#314239"/>
+    <text x="138" y="288" text-anchor="middle" fill="#fffef9" font-size="9">TrueForge</text><text x="138" y="302" text-anchor="middle" fill="#b6c4a9" font-size="8">agent + tools</text>
+    <text x="284" y="288" text-anchor="middle" fill="#fffef9" font-size="9">Renderer + FFmpeg</text><text x="284" y="302" text-anchor="middle" fill="#b6c4a9" font-size="8">CPU / disk</text>
+    <path d="M220 334v21" stroke="#90a27b" stroke-width="2"/><path d="m214 351 6 8 6-8" fill="#90a27b"/>
+    <rect x="112" y="363" width="216" height="51" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <path d="M133 378h17v19h-17zM137 374h17v19" fill="none" stroke="#78905b" stroke-width="1.5"/>
+    <text x="166" y="385" fill="#344239" font-size="10" font-weight="600">SQLite + local media</text><text x="166" y="401" fill="#859082" font-size="9">No public uploads</text>
+    <text x="28" y="482" fill="#51674a" font-size="12" font-weight="700">Best for: build + demo today</text>
+    <text x="28" y="510" fill="#6f7a70" font-size="11">✓ Smallest moving parts</text><text x="28" y="535" fill="#6f7a70" font-size="11">✓ Media stays on the computer</text>
+    <text x="28" y="566" fill="#a16f55" font-size="11">! One machine; not always online</text><text x="28" y="591" fill="#a16f55" font-size="11">! Keep it bound to localhost</text>
+  </g>
+
+  <!-- HYBRID -->
+  <g transform="translate(530 168)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="440" height="650" rx="22" fill="#fffef9" stroke="#9cb375" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="440" height="8" rx="4" fill="url(#accent)"/>
+    <rect x="285" y="25" width="127" height="25" rx="12" fill="#e6efce"/><text x="348" y="42" text-anchor="middle" fill="#536c3b" font-size="9" font-weight="700" letter-spacing=".8">RECOMMENDED NEXT</text>
+    <text x="28" y="49" fill="#75816f" font-size="10" font-weight="700" letter-spacing="1.5">PRIVATE BETA · SMALL GROUP</text>
+    <text x="28" y="84" fill="#203029" font-family="Georgia, serif" font-size="27">Hybrid render service</text>
+    <rect x="28" y="105" width="384" height="335" rx="16" fill="#f3f4eb" stroke="#e3e6db"/>
+    <rect x="45" y="151" width="89" height="59" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="89" y="176" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Mobile / web</text><text x="89" y="193" text-anchor="middle" fill="#859082" font-size="8">auth + upload</text>
+    <path d="M135 180h18" stroke="#81996a" stroke-width="2"/><path d="m150 174 8 6-8 6" fill="#81996a"/>
+    <rect x="160" y="151" width="112" height="59" rx="10" fill="#203029"/>
+    <text x="216" y="176" text-anchor="middle" fill="#fffef9" font-size="9" font-weight="600">Studio API</text><text x="216" y="193" text-anchor="middle" fill="#bfd199" font-size="8">TrueForge agent</text>
+    <path d="M273 180h18" stroke="#81996a" stroke-width="2"/><path d="m288 174 8 6-8 6" fill="#81996a"/>
+    <rect x="299" y="151" width="96" height="59" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="347" y="176" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Job queue</text><text x="347" y="193" text-anchor="middle" fill="#859082" font-size="8">status events</text>
+    <path d="M347 211v25" stroke="#81996a" stroke-width="2"/><path d="m341 232 6 8 6-8" fill="#81996a"/>
+    <rect x="234" y="245" width="161" height="69" rx="11" fill="#e6edd9" stroke="#d3dec3"/>
+    <text x="314" y="272" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Private render worker</text><text x="314" y="290" text-anchor="middle" fill="#75836a" font-size="8">HyperFrames + FFmpeg</text>
+    <path d="M234 280h-30v-27" fill="none" stroke="#81996a" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <rect x="46" y="253" width="149" height="61" rx="10" fill="url(#cloud)" stroke="#cbd8e8"/>
+    <text x="120" y="278" text-anchor="middle" fill="#34425a" font-size="9" font-weight="600">Managed model API</text><text x="120" y="296" text-anchor="middle" fill="#72809a" font-size="8">keys stay server-side</text>
+    <path d="M195 283h33" stroke="#8b9cbb" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <path d="M314 315v30" stroke="#81996a" stroke-width="2"/><path d="m308 341 6 8 6-8" fill="#81996a"/>
+    <rect x="207" y="355" width="188" height="58" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="301" y="379" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Object storage + SQL</text><text x="301" y="397" text-anchor="middle" fill="#859082" font-size="8">videos · source · projects</text>
+    <path d="M208 383h-25" stroke="#81996a" stroke-width="1.5"/><path d="m187 377-8 6 8 6" fill="#81996a"/>
+    <text x="28" y="482" fill="#51674a" font-size="12" font-weight="700">Best for: invite-only creators</text>
+    <text x="28" y="510" fill="#6f7a70" font-size="11">✓ Web access; heavy jobs run elsewhere</text><text x="28" y="535" fill="#6f7a70" font-size="11">✓ Media can expire or be private</text>
+    <text x="28" y="566" fill="#a16f55" font-size="11">! Add accounts, queue, and job isolation</text><text x="28" y="591" fill="#a16f55" font-size="11">! Track render cost per video</text>
+  </g>
+
+  <!-- HOSTED -->
+  <g transform="translate(998 168)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="440" height="650" rx="22" fill="#fffef9" stroke="#dfe3d7" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="440" height="8" rx="4" fill="#9ab3d0"/>
+    <text x="28" y="49" fill="#75816f" font-size="10" font-weight="700" letter-spacing="1.5">LATER · TEAMS + PUBLIC USERS</text>
+    <text x="28" y="84" fill="#203029" font-family="Georgia, serif" font-size="27">Hosted platform</text>
+    <rect x="28" y="105" width="384" height="335" rx="16" fill="#f3f4eb" stroke="#e3e6db"/>
+    <rect x="46" y="132" width="110" height="51" rx="9" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="101" y="154" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Creators</text><text x="101" y="169" text-anchor="middle" fill="#859082" font-size="8">phone · desktop</text>
+    <path d="M157 157h23" stroke="#8098b6" stroke-width="2"/><path d="m176 151 8 6-8 6" fill="#8098b6"/>
+    <rect x="187" y="132" width="111" height="51" rx="9" fill="#e5edf7" stroke="#cbd8e8"/>
+    <text x="242" y="154" text-anchor="middle" fill="#34425a" font-size="9" font-weight="600">Edge + auth</text><text x="242" y="169" text-anchor="middle" fill="#72809a" font-size="8">API · rate limits</text>
+    <path d="M299 157h23" stroke="#8098b6" stroke-width="2"/><path d="m318 151 8 6-8 6" fill="#8098b6"/>
+    <rect x="329" y="132" width="66" height="51" rx="9" fill="#203029"/>
+    <text x="362" y="154" text-anchor="middle" fill="#fffef9" font-size="8" font-weight="600">Queue</text><text x="362" y="169" text-anchor="middle" fill="#bfd199" font-size="8">jobs</text>
+    <path d="M362 184v24" stroke="#8098b6" stroke-width="2"/><path d="m356 204 6 8 6-8" fill="#8098b6"/>
+    <rect x="47" y="216" width="348" height="73" rx="11" fill="#e5edf7" stroke="#cbd8e8"/>
+    <text x="221" y="241" text-anchor="middle" fill="#34425a" font-size="10" font-weight="700">Isolated render workers</text>
+    <rect x="63" y="253" width="92" height="23" rx="7" fill="#fffef9"/><rect x="175" y="253" width="92" height="23" rx="7" fill="#fffef9"/><rect x="287" y="253" width="92" height="23" rx="7" fill="#fffef9"/>
+    <text x="109" y="269" text-anchor="middle" fill="#718095" font-size="8">worker A</text><text x="221" y="269" text-anchor="middle" fill="#718095" font-size="8">worker B</text><text x="333" y="269" text-anchor="middle" fill="#718095" font-size="8">worker N</text>
+    <path d="M221 290v24" stroke="#8098b6" stroke-width="2"/><path d="m215 310 6 8 6-8" fill="#8098b6"/>
+    <rect x="49" y="324" width="164" height="61" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="131" y="350" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Project database</text><text x="131" y="368" text-anchor="middle" fill="#859082" font-size="8">users · jobs · billing</text>
+    <rect x="230" y="324" width="164" height="61" rx="10" fill="#fffef9" stroke="#d8dfcf"/>
+    <text x="312" y="350" text-anchor="middle" fill="#344239" font-size="9" font-weight="600">Private media store</text><text x="312" y="368" text-anchor="middle" fill="#859082" font-size="8">signed links · lifecycle</text>
+    <text x="28" y="482" fill="#51674a" font-size="12" font-weight="700">Best for: repeat use + collaboration</text>
+    <text x="28" y="510" fill="#6f7a70" font-size="11">✓ Separate scaling for API and renders</text><text x="28" y="535" fill="#6f7a70" font-size="11">✓ Projects can be shared by a team</text>
+    <text x="28" y="566" fill="#a16f55" font-size="11">! Highest security + ops responsibility</text><text x="28" y="591" fill="#a16f55" font-size="11">! Usage, storage, and retention controls</text>
+  </g>
+
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect x="62" y="848" width="1376" height="92" rx="17" fill="#203029"/>
+    <text x="91" y="883" fill="#d5ed86" font-size="11" font-weight="700" letter-spacing="1.2">SANE EVOLUTION</text>
+    <text x="91" y="911" fill="#fffef9" font-size="13">localhost prototype</text>
+    <path d="M235 906h80" stroke="#a7be82" stroke-width="2"/><path d="m309 900 8 6-8 6" fill="#a7be82"/>
+    <text x="343" y="911" fill="#fffef9" font-size="13">private beta + queued worker</text>
+    <path d="M557 906h80" stroke="#a7be82" stroke-width="2"/><path d="m631 900 8 6-8 6" fill="#a7be82"/>
+    <text x="665" y="911" fill="#fffef9" font-size="13">hosted teams when demand is real</text>
+    <text x="1406" y="900" text-anchor="end" fill="#b5c2b0" font-size="10">Protect uploads · keep provider keys server-side · isolate every render job</text>
+  </g>
+</svg>

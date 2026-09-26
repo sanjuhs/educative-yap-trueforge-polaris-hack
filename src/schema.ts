@@ -3,6 +3,7 @@ import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { motionSchema, placementSchema } from "./motion-schema.js";
 import { z } from "zod";
 import { wordBudget } from "./duration.js";
+import { visualAssetIdsSchema } from "./visual-assets.js";
 export const sceneSchema = z.object({
   shotKind: shotKindSchema.optional(),
   startSeconds: z
@@ -60,6 +61,7 @@ export const planSchema = z
   .object({
     creativeBrief: creativeBriefSchema.optional(),
     clipAssetIds: clipIdsSchema.optional(),
+    visualAssetIds: visualAssetIdsSchema.optional(),
     motion: motionSchema.optional(),
     presenterMode: z.enum(["cutout", "split"]).optional(),
     presenterPlacement: placementSchema.optional(),

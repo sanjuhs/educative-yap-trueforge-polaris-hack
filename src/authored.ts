@@ -13,6 +13,7 @@ import { getPresenter, presenterTimeline } from "./presenter.js";
 import { run, rendererEnv } from "./process.js";
 
 import { motionSchema, placementSchema } from "./motion-schema.js";
+import { visualAssetIdsSchema, readVisualAsset } from "./visual-assets.js";
 export const authoredInputSchema = z.object({
   clipAssetIds: clipIdsSchema
     .optional()
@@ -23,6 +24,11 @@ export const authoredInputSchema = z.object({
     .optional()
     .describe(
       "Copy the supplied user creative brief; its mix and pacing are editorial targets, not fixed templates.",
+    ),
+  visualAssetIds: visualAssetIdsSchema
+    .optional()
+    .describe(
+      "Imported internet image IDs used in this design. Reference each as visual-<id> in img src. Source metadata travels with the video.",
     ),
   title: z.string().min(1).max(90),
   summary: z.string().min(1).max(400),
@@ -88,6 +94,7 @@ export async function previewDesign(
   const plan = authoredPlan(input),
     id = randomUUID(),
     dir = designDir(id);
+  await Promise.all((plan.visualAssetIds || []).map(readVisualAsset));
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(
     path.join(dir, "plan.json"),

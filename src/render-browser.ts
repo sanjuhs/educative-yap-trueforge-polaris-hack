@@ -5,6 +5,7 @@ import path from "node:path";
 import { config } from "./config.js";
 import type { Plan, TimedScene } from "./schema.js";
 import type { Caption } from "./presenter.js";
+import { readVisualAsset, visualAssetPath } from "./visual-assets.js";
 
 export type RenderInput = {
   plan: Plan;
@@ -63,13 +64,21 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
       },
     ],
   ]);
+  const visualAssets = await Promise.all(
+    (input.plan.visualAssetIds || []).map(readVisualAsset),
+  );
+  for (const asset of visualAssets)
+    resources.set(`/visual-${asset.id}`, {
+      body: await fs.readFile(visualAssetPath(asset.id)),
+      contentType: asset.contentType,
+    });
   const clips = await Promise.all(
     (input.plan.clipAssetIds || []).map(readClip),
   );
   const clipMap = new Map(clips.map((c) => [c.id, c]));
   const csp = renderCsp.replace(
     "img-src data: http://render.invalid/cafe.png;",
-    `img-src data: http://render.invalid/cafe.png ${clips.map((c) => `${renderOrigin}/clip-${c.id}/`).join(" ")};`,
+    `img-src data: http://render.invalid/cafe.png ${visualAssets.map((a) => `${renderOrigin}/visual-${a.id}`).join(" ")} ${clips.map((c) => `${renderOrigin}/clip-${c.id}/`).join(" ")};`,
   );
   const blocked: string[] = [];
   await context.route("**/*", async (route) => {
@@ -127,6 +136,21 @@ export async function openAuthoredPage(browser: Browser, input: RenderInput) {
       Array.from(document.images).map((i) => i.decode().catch(() => {})),
     );
   });
+  if (visualAssets.length)
+    await page.evaluate((assets) => {
+      const el = document.createElement("div");
+      el.id = "host-image-credits";
+      el.style.cssText =
+        "position:fixed;bottom:24px;left:45px;right:45px;z-index:2147483647;color:#eee;background:#080c12d9;padding:9px 15px;font:28px/1.3 Arial;text-align:center;border-radius:8px";
+      const creators = [
+        ...new Set(assets.map((a) => a.creator.split(";")[0])),
+      ].join(" · ");
+      el.textContent =
+        "Images: " +
+        (creators.length > 45 ? creators.slice(0, 42) + "…" : creators) +
+        " · Full credits attached";
+      document.body.append(el);
+    }, visualAssets);
   await page.evaluate((clips) => {
     for (const el of document.querySelectorAll<HTMLImageElement>(
       "img[data-clip-id]",

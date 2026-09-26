@@ -1,158 +1,154 @@
-# Educative Yap
+<div align="center">
 
-Turn a topic into a short, narrated educational video on your computer.
-Built for the TrueForge hackathon at Polaris School of Technology.
+![Educative Yap — an AI director that makes the edit](docs/showcase/hero.svg)
 
-**Working first version:** a local studio, a configured TrueForge agent, and a
-custom animation worker. Astra writes the animation source, reviews preview frames,
-and can revise the entire design. Give it a topic, watch the render progress, then
-play or download a 1080 × 1920 MP4. Follow up in the same chat to make a new version.
+[![MIT](https://img.shields.io/badge/license-MIT-86dcb9)](LICENSE)
+[![TrueForge](https://img.shields.io/badge/orchestrated_by-TrueForge-ff886b)](https://github.com/truefoundry/trueforge)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Node_22+-3178c6)](package.json)
+[![Video](https://img.shields.io/badge/export-1080×1920_MP4-142d35)](docs/freeform-director.md)
 
-## Run locally
+**Give it an idea—or a recording of yourself teaching. Get an original animated explainer with narration, captions, sourced visuals and an editable project.**
 
-Requires **Node.js 22.14+**, **FFmpeg**, and an **OpenAI API key** with API billing.
-On macOS, install FFmpeg with `brew install ffmpeg`; on Ubuntu, use
-`sudo apt install ffmpeg`. Windows users can install FFmpeg and add it to PATH.
+[Quick start](#run-it-locally) · [Real experiment](#a-real-one-minute-experiment) · [How the agents-workflow works](#trueforge-does-the-work) · [Architecture](docs/architecture.md) · [Animation skill](skills/animate-explainers/SKILL.md)
+
+</div>
+
+## From an idea to a finished explanation
+
+> “Explain the Korean War in one minute. Show how the front moved, why China intervened, and why the armistice did not reunify Korea. Use moving maps, archival imagery and subtitles.”
+
+Yap's director writes narration, designs shots, finds useful images or footage, writes the animation source, inspects rendered previews, repairs problems and exports a vertical video. A revision can change the whole design. There is no required scene-template catalog.
+
+| You direct | Yap creates |
+|---|---|
+| Topic, script or teaching notes | A narrated sequence of explanatory beats |
+| Your video and voice | Presenter cutout or split-screen explanation |
+| Duration, model, reasoning and visual preferences | A custom HTML/CSS/SVG/Canvas animation |
+| Feedback on the result | A new version with its own source and output |
+
+## A real one-minute experiment
+
+![Frames from the generated Korean War experiment: changing fronts, civilian consequences and the armistice boundary](docs/showcase/korean-war.jpg)
+
+**60.17 seconds · eight beats · subtitles · two archival photographs · four seconds of sourced B-roll.**
+
+The experiment used GPT-6 Astra/high and approximately **$2.92** in recorded model usage plus audio estimates, including the interrupted run, revisions and audio checks. It exposed real problems: a ten-minute agent timeout, overlapping map labels, an omitted TTS sentence and approximate captions. The final artifact was repaired and checked. This is evidence from one experiment—not a promised price or proof that every generation is ready to publish.
+
+[Read the experiment and its limitations](docs/experiments/korean-war.md). Images credit R. V. Spencer and Donald Douglas George Bushby; source metadata accompanies generated projects. Clips retain source URLs, channel names, timestamps and permission status.
+
+## TrueForge does the work
+
+Built as a standalone open-source project for **Agents That Act: TrueFoundry × Polaris**. TrueForge runs the actual agent loop; it is not a decorative integration around a separate director.
+
+```mermaid
+flowchart LR
+  B[Topic + creative brief] --> T[TrueForge director]
+  T --> S[Search images and clips]
+  S --> A[Imported assets + provenance]
+  T --> C[Write original animation code]
+  A --> P[Restricted preview renderer]
+  C --> P
+  P --> V[Visual review]
+  V -->|Specific corrections| T
+  V -->|Accepted preview| R[Narration + render worker]
+  R --> O[MP4 + captions + source + credits]
+  T -. trace and usage .-> H[Inspectable history]
+```
+
+| TrueForge capability | How Yap uses it |
+|---|---|
+| Stateful agent sessions | Keep the brief, tool results and revision context together |
+| MCP tools | Source assets, inspect excerpts, preview designs and enqueue renders |
+| Model profiles | Choose Luna, Sol or Astra and reasoning effort per session |
+| Tool traces | Inspect decisions, tool calls, errors and visual critiques |
+| Agent/tool boundaries | Separate creative direction from trusted media operations |
+| Approval support | Available in the harness; current local tools do not publish or contact creators, and require no interactive approval |
+
+**Multiple-agent design:** research, direction and critique are useful separate roles. Today, one TrueForge director coordinates dedicated visual-review model calls. Dynamic subagents are disabled in the shipped local profile. A future research/critic subagent can return evidence or feedback while only the director commits the final plan. This avoids competing edits and duplicated renders. We do not claim a multi-agent swarm or measured orchestration savings that the current code does not demonstrate.
+
+## Creative control without fixed templates
+
+- **Custom motion:** causal diagrams, animated maps, procedural objects, camera movement and scene-specific compositions. The [animation skill](skills/animate-explainers/SKILL.md) is included in the director's instructions.
+- **Real visual assets:** Wikimedia image search and optional autonomous YouTube excerpt search/import. No user-provided link is required. Relevance is checked from actual frames; metadata alone is not historical evidence.
+- **Your performance:** keep your original recording and voice, with background removal or a split-screen composition.
+- **Duration:** AI-voice targets from 5 seconds to 20 minutes in 5-second steps, aiming within ±6 seconds. Presenter uploads currently support 3–60 seconds.
+- **Model and budget:** selectable model/reasoning, illustrative estimates before generation, recorded token usage afterward. Rendering does not require a model call per frame.
+- **Inspectable outputs:** MP4, storyboard, generated animation, source credits and traces. Previous projects remain available for comparison.
+
+Long-duration input support is implemented, but twenty-minute production quality and runtime have not been benchmarked. Generated voice captions currently use approximate phrase timing unless a separate alignment pass is performed. [Duration limits](docs/duration-and-animation.md) · [Model costs](docs/model-costs.md) · [B-roll workflow](docs/broll-roadmap.md).
+
+## Run it locally
+
+Requires **Node.js 22.14+**, **FFmpeg** and an **OpenAI API key** with API access to the chosen model. Install FFmpeg with `brew install ffmpeg` on macOS or `sudo apt install ffmpeg` on Ubuntu.
 
 ```sh
 npm ci
 npx playwright install chromium
 cp example.env .env
-# Edit .env: replace sk-your-key-here with your real OpenAI API key.
+# Set OPENAI_API_KEY privately in .env.
 npm start
 ```
 
-Open **http://127.0.0.1:8789** for the studio or **http://127.0.0.1:8790** for
-TrueForge's full agent interface. The launcher starts both services, connects the
-OpenAI provider, registers the video MCP tools, and creates the `educative-yap`
-agent. It uses a separate project-local TrueForge database.
+Open **http://127.0.0.1:8789**. TrueForge's local interface is at **http://127.0.0.1:8790**. The launcher starts both services, configures the provider and model profiles, and registers Yap's MCP tools.
 
-New videos render in isolated Chromium. The earlier HyperFrames renderer remains
-for existing projects. Rendering and background removal are local;
-planning and AI voice generation use your OpenAI account and incur API usage.
-The studio uses Google Fonts, with system-font fallbacks; rendered videos use
-local system fonts and bundled GSAP, without external asset requests.
+Optional YouTube support:
 
-## Try it
+```sh
+npm run setup:clips
+# Restart the app after installation.
+```
 
-> Explain why the sky turns red at sunset, with a vivid analogy, in 30 seconds.
+Local media and session data live in `.data/`, excluded from Git. Audio goes to the provider for narration/transcription, selected frames for visual critique, and text context to the director. The studio uses Google Fonts with fallbacks; video rendering uses local fonts and bundled GSAP.
 
-Then follow up:
+### Teach with your own recording
 
-> Make that more playful and shorten it to 20 seconds. Keep the sunset comparison.
+Choose **Me + explainer visuals · My voice**, upload a video, then choose **Remove background** or **Split screen**. The uploaded voice is preserved. An optional separate voiceover must already align with the video and match its duration within 0.75 seconds. Files are limited to 250 MB each. Apple Vision is preferred on macOS, with a portable MediaPipe fallback. See [presenter and rendering details](docs/freeform-director.md).
 
-The agent reads the existing storyboard and creates a new render, preserving the
-original. TrueForge dynamic subagents are enabled; the director uses them when a
-complex request benefits from separate critique or research reasoning. Simple
-videos generally use one agent. No separate cloud sandbox is required for our
-video tools.
+## Standalone hosted architecture
 
-## What works
+The local studio is the starting point. The hosted implementation uses a separate Yap application, database/role, storage namespace and worker deployment. Make My Reels supplies infrastructure patterns, not application code or a runtime dependency.
 
-- Topic → script and storyboard via the real TrueForge agent loop.
-- Original HTML/CSS/SVG/Canvas animation written by Astra, with preview, repair and vision critique.
-- Background-removed presenter overlays, plus an optional original-background split screen.
-- OpenAI narration, phrase captions, transitions, and an original synthesized music bed.
-- One-at-a-time render queue, persistent project history, progress, playback, and download.
-- Chat revisions; each version keeps its editable HTML, storyboard, and audio on disk.
-- Export checks for vertical dimensions and an audio stream.
+```mermaid
+flowchart TB
+  U[Creator browser] --> W[Vercel studio + same-origin gateway]
+  W --> API[Authenticated Yap API on VPS]
+  API --> DB[(Yap Postgres)]
+  API --> R2[(Private Yap R2 storage)]
+  API --> Q[Durable generation jobs]
+  Q --> TF[Private TrueForge orchestrator]
+  TF --> MCP[Owner-scoped Yap MCP tools]
+  MCP --> MW[Trusted Modal adapter]
+  MW --> SB[Disposable generated-code sandbox]
+  SB --> MW
+  MW --> R2
+```
 
-## Use your own video and voice
+**Hosted work is in progress until deployment and end-to-end verification are recorded.** Vercel serves the web experience; long-running agent and media work belongs in the backend/workers. Modal is integrated explicitly through Yap's tools/adapter, not represented as a built-in TrueForge sandbox provider. Never expose the local unauthenticated TrueForge interface publicly.
 
-Choose **Me + explainer visuals · My voice** in the studio, then upload your
-video. Choose **Remove background · Me over the visuals** for a presenter cutout
-on an original animated background, or **Keep background · Split screen** for
-the source video below the visuals. The original voice is preserved; this mode
-does not generate AI narration. Apple Vision is preferred on macOS; local
-MediaPipe provides a portable fallback. Use **Revise this video** to reuse the
-recording and let Astra change its placement or rewrite the entire animation.
+Future community, collaboration and mobile concepts are preserved in [product concepts](docs/product-concepts.md); they are not prerequisites for the creator studio or claims of shipped features.
 
-An optional separate voiceover replaces the video's audio. It must already
-start in sync with the video and match its duration within 0.75 seconds. Automatic
-lip-sync, offset correction, and retiming are not included. Uploads support
-3–60 second recordings, up to 250 MB per file; FFmpeg checks the actual media.
+## Configuration and development
 
-Your full video stays local. Audio is sent to OpenAI for timestamped transcription;
-selected preview stills are sent for AI visual critique,
-and the transcript is given to TrueForge to plan scene changes. Presenter
-captions follow transcription word timestamps, which may need correction for
-unclear speech. Animated explainers still use approximate phrase timing.
+`example.env` and `.env.example` contain placeholders. Never commit `.env`, provider keys or personal recordings.
 
-Visuals are original generated scene code, executed in a restricted browser.
-See [the freeform director](docs/freeform-director.md) for the authoring contract,
-local segmentation, setup and limitations. Presenter uploads currently remain limited to 60 seconds; AI-voice duration targets run from 5 seconds to 20 minutes.
-
-## Visual direction and per-video costs
-
-The director now defaults to **GPT-6 Astra with high reasoning**, orchestrated by
-TrueForge. The model writes a complete custom animation and can revise its source
-after preview feedback. The studio
-shows measured token usage and estimated API cost after each generation turn.
-
-See [visuals and cost accounting](docs/visuals-and-costs.md) for supported scenes,
-pricing assumptions, cache-write accounting, and exclusions. Rendering itself
-uses no further model calls. HDR iPhone uploads require an FFmpeg build with
-`zscale`, `tonemap`, and `subtitles` filters (the Homebrew build used here supports all three).
-
-## Configuration
-
-Both `example.env` and `.env.example` contain placeholders only. `.env`, local
-TrueForge credentials, generated media, and logs are excluded from Git.
-
-| Variable                  | Default           | Purpose                                           |
-| ------------------------- | ----------------- | ------------------------------------------------- |
-| `OPENAI_API_KEY`          | required          | TrueForge planning and voice generation           |
-| `OPENAI_MODEL`            | `gpt-6-astra`     | Director model; must support tool calls           |
-| `OPENAI_REASONING_EFFORT` | `high`            | Director reasoning effort                         |
-| `CUTOUT_BACKEND`          | `auto`            | Prefer Apple Vision on macOS; otherwise MediaPipe |
-| `OPENAI_TTS_MODEL`        | `gpt-4o-mini-tts` | Narration model                                   |
-| `STUDIO_PORT`             | `8789`            | Studio and local MCP endpoint                     |
-| `PORT`                    | `8790`            | TrueForge interface and API                       |
-
-Restart after changing configuration. The launcher updates this project's
-provider key, model, agent instructions, and MCP endpoint automatically. Both
-services bind to `127.0.0.1`. Keep this personal-use setup on localhost.
-
-## Development and troubleshooting
+| Variable | Default | Purpose |
+|---|---|---|
+| `OPENAI_API_KEY` | required | Planning, review and speech |
+| `OPENAI_MODEL` | `gpt-6-astra` | Default director |
+| `OPENAI_REASONING_EFFORT` | `high` | Default reasoning |
+| `OPENAI_TTS_MODEL` | `gpt-4o-mini-tts` | AI narration |
+| `CUTOUT_BACKEND` | `auto` | Presenter segmentation |
+| `STUDIO_PORT` / `PORT` | `8789` / `8790` | Local studio / TrueForge |
+| `SERVER_EXECUTION_TIMEOUT_SECONDS` | `1800` | Agent-turn execution allowance |
 
 ```sh
 npm run check
 npm test
-npm run format:check
-npm run demo -- "Explain how a neural network learns in 25 seconds"
+npm run demo -- "Explain why the sky turns red in 30 seconds"
 ```
 
-`npm run demo` requires the app to be running and makes a real paid model/voice
-request. Find logs in `.data/trueforge.log` and
-`.data/projects/<id>/render.log`. A stopped render is marked failed on restart;
-ask the agent to create another version to retry. Ctrl+C stops the app and its
-TrueForge child process; stop after active renders finish.
-
-The source is in `src/`, the browser UI in `public/`, and a generated sample
-storyboard in `examples/sunset.json`. The original brief is preserved in
-[Instructions.md](Instructions.md). See [architecture](docs/architecture.md)
-for integration details and the deployment path.
+The demo requires a running server and makes paid API requests. Logs: `.data/trueforge.log` and `.data/projects/<id>/render.log`. A stopped local render is marked failed on restart. [Architecture](docs/architecture.md) · [Original brief](Instructions.md) · [Hackathon challenge](hackathon-challenge.md).
 
 ## License
 
-Original code: [MIT](LICENSE). Dependencies retain their own licenses:
-[TrueForge](https://github.com/truefoundry/trueforge) is MIT,
-[HyperFrames](https://github.com/heygen-com/hyperframes) is Apache-2.0, and GSAP
-has its own license. Remotion is not installed in this first version.
-
-## Choosing a model and estimating cost
-
-Choose Luna, Sol or Astra and a reasoning effort in the studio. The selection applies to both editing and visual review. The studio shows an illustrative 30-second budget before generation and measured token usage afterward. See [model options and cost accounting](docs/model-costs.md) for assumptions, rates and comparisons.
-
-## Autonomous YouTube B-roll
-
-Run `npm run setup:clips` once to install the optional clip tools, then restart the app. Leave **YouTube B-roll → Auto** enabled: the director finds sources, inspects 3–5 second excerpts, and integrates useful footage into the draft without asking for links. Each result includes downloadable, copyable footage credits with channel, title, URL, timestamps and permission-pending status. See [footage workflow and limits](docs/broll-roadmap.md).
-
-
-### Video length and animation guidance
-
-Choose an approximate AI-voice duration from **5 seconds to 20 minutes**, in **5-second steps**. The director receives the target and writes enough narration and distinct beats; final audio aims within **±6 seconds**. Small mismatches can use a pitch-preserving tempo adjustment (0.85–1.18×). Larger mismatches fail with a request to rewrite instead of stretching a short script. Presenter videos keep their original voice and length (current upload limit: 60 seconds).
-
-The [animation skill](skills/animate-explainers/SKILL.md) is automatically included in TrueForge's director instructions. It teaches narration-driven action, procedural objects, camera movement, transitions and varied compositions without enforcing a template. Optional reference analysis is available through `get_animation_reference`. Copy the skill folder into `~/.codex/skills` to use it in Codex as well.
-
-Long videos use up to 160 scenes, sequential audio preparation, concatenation and duration-scaled renderer timeouts. Budget previews scale the 30-second scenario proportionally; they are not measured long-video prices. See [duration support and validation limits](docs/duration-and-animation.md).
+Original code: **[MIT](LICENSE)**. Dependencies and imported media retain their own licenses. TrueForge is MIT; HyperFrames is Apache-2.0; GSAP has its own license. Remotion is not installed. Credits record provenance; attribution alone does not establish permission to reuse a clip.

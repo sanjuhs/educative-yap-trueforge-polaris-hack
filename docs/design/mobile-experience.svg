@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980" role="img" aria-labelledby="title desc">
+  <title id="title">Educative Yap mobile app concept</title>
+  <desc id="desc">Three mobile screen concepts: start an idea, review a storyboard, then preview and export a vertical explainer.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8f7f0"/><stop offset="1" stop-color="#e9eedf"/></linearGradient>
+    <linearGradient id="photo" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#51418c"/><stop offset=".52" stop-color="#44aaba"/><stop offset="1" stop-color="#e6a54d"/></linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9f47d"/><stop offset="1" stop-color="#4e906e"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7456ca"/><stop offset="1" stop-color="#353769"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-20%" width="160%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#27372e" flood-opacity=".13"/></filter>
+  </defs>
+  <rect width="1440" height="980" rx="34" fill="url(#paper)"/>
+  <circle cx="1300" cy="80" r="220" fill="#d5ed86" opacity=".18"/>
+  <circle cx="100" cy="900" r="240" fill="#aac7a0" opacity=".12"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="86" y="86" fill="#67804c" font-size="15" font-weight="700" letter-spacing="3">A PHONE-FIRST STUDIO</text>
+    <text x="86" y="137" fill="#202d27" font-family="Georgia, serif" font-style="italic" font-size="38">A simple path from idea to aha.</text>
+    <text x="1350" y="92" text-anchor="end" fill="#758078" font-size="13" letter-spacing="1">PRODUCT CONCEPT · NOT A SCREENSHOT</text>
+  </g>
+
+  <!-- Screen 1: create -->
+  <g transform="translate(94 188)" filter="url(#shadow)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="354" height="690" rx="44" fill="#18251f"/>
+    <rect x="9" y="9" width="336" height="672" rx="37" fill="#fffef9"/>
+    <rect x="130" y="10" width="94" height="20" rx="10" fill="#18251f"/>
+    <text x="30" y="52" fill="#1c2b24" font-size="12" font-weight="700">9:41</text>
+    <text x="29" y="103" fill="#1c2b24" font-size="25" font-weight="700" letter-spacing="-2">yap<tspan fill="#879d51">↗</tspan></text>
+    <circle cx="304" cy="94" r="17" fill="#edf1e2"/><path d="M300 97c0-8 2-11 5-11s5 3 5 11l3 4h-16z" fill="none" stroke="#66765b" stroke-width="1.6"/><circle cx="305" cy="104" r="1.5" fill="#66765b"/>
+    <text x="28" y="158" fill="#1c2b24" font-family="Georgia, serif" font-size="29">Good ideas</text>
+    <text x="28" y="192" fill="#6e8454" font-family="Georgia, serif" font-style="italic" font-size="29">move people.</text>
+    <text x="28" y="223" fill="#788278" font-size="11">What do you want someone to understand?</text>
+    <rect x="25" y="245" width="304" height="157" rx="16" fill="#f3f4ec" stroke="#dfe3d6"/>
+    <text x="43" y="274" fill="#7b8678" font-size="9" font-weight="700" letter-spacing="1.5">YOUR NEXT LITTLE VIDEO</text>
+    <text x="43" y="308" fill="#344239" font-size="14">Why do leaves change</text><text x="43" y="330" fill="#344239" font-size="14">color in the fall?</text>
+    <path d="M43 365h268" stroke="#d9dfd1"/>
+    <circle cx="51" cy="383" r="8" fill="#d5ed86"/><path d="M48 383h6m-3-3v6" stroke="#52673e" stroke-width="1.3"/>
+    <text x="67" y="387" fill="#71806b" font-size="9">ADD VOICE NOTE OR SOURCE</text>
+    <text x="28" y="434" fill="#687765" font-size="9" font-weight="700" letter-spacing="1.3">START WITH A SPARK</text>
+    <rect x="26" y="450" width="91" height="70" rx="10" fill="url(#photo)"/>
+    <circle cx="71" cy="479" r="15" fill="#e9efc9" opacity=".85"/><path d="M70 492c-16-4-17-19-3-24 3 11 7 13 3 24z" fill="#4e906e"/>
+    <rect x="128" y="450" width="91" height="70" rx="10" fill="url(#violet)"/>
+    <circle cx="174" cy="483" r="18" fill="none" stroke="#a9e3ee" stroke-width="1.2"/><path d="M152 483h44M174 461v44" stroke="#a9e3ee" stroke-opacity=".75"/>
+    <rect x="230" y="450" width="98" height="70" rx="10" fill="#e7eedd" stroke="#d5deca" stroke-dasharray="4 4"/>
+    <path d="M270 476h17m-8-8v17" stroke="#80916e" stroke-width="2" stroke-linecap="round"/>
+    <text x="28" y="551" fill="#788278" font-size="10">30 sec · vertical · AI voice</text>
+    <rect x="26" y="570" width="302" height="48" rx="12" fill="#203029"/>
+    <text x="177" y="600" text-anchor="middle" fill="#fffef9" font-size="12" font-weight="600">Make a little video  ↗</text>
+    <text x="177" y="650" text-anchor="middle" fill="#859086" font-size="9">API AI · LOCAL PROJECT FILES</text>
+  </g>
+
+  <!-- Screen 2: storyboard review -->
+  <g transform="translate(543 188)" filter="url(#shadow)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="354" height="690" rx="44" fill="#18251f"/>
+    <rect x="9" y="9" width="336" height="672" rx="37" fill="#fffef9"/>
+    <rect x="130" y="10" width="94" height="20" rx="10" fill="#18251f"/>
+    <text x="30" y="52" fill="#1c2b24" font-size="12" font-weight="700">9:41</text>
+    <path d="m37 94-7 7 7 7" fill="none" stroke="#53664a" stroke-width="2"/><text x="52" y="104" fill="#64735d" font-size="11">YOUR STORY</text>
+    <text x="28" y="149" fill="#1c2b24" font-family="Georgia, serif" font-size="26">Leaves in a new</text><text x="28" y="180" fill="#6e8454" font-family="Georgia, serif" font-style="italic" font-size="26">light.</text>
+    <rect x="26" y="201" width="303" height="53" rx="12" fill="#f2f3ec"/>
+    <circle cx="52" cy="227" r="13" fill="#dce7c8"/><path d="M50 220v14l10-7z" fill="#60754b"/>
+    <text x="75" y="224" fill="#52604f" font-size="10" font-weight="600">MARIN · WARM + CURIOUS</text><text x="75" y="240" fill="#849080" font-size="9">4 beats · about 38 sec</text>
+    <text x="28" y="283" fill="#778275" font-size="9" font-weight="700" letter-spacing="1.4">THE STORY BEATS</text>
+    <g>
+      <rect x="26" y="300" width="303" height="72" rx="12" fill="#fff" stroke="#e0e4d9"/><rect x="26" y="300" width="5" height="72" rx="2" fill="#e5a366"/><text x="45" y="323" fill="#8b927d" font-size="8" font-weight="700" letter-spacing="1">01 · THE QUESTION</text><text x="45" y="350" fill="#27362e" font-size="13" font-weight="600">Where does the green go?</text><circle cx="303" cy="336" r="12" fill="#f0f1e9"/><path d="m300 333 6 3-6 3" fill="none" stroke="#69765d"/>
+      <rect x="26" y="381" width="303" height="72" rx="12" fill="#fff" stroke="#e0e4d9"/><rect x="26" y="381" width="5" height="72" rx="2" fill="#8faf71"/><text x="45" y="404" fill="#8b927d" font-size="8" font-weight="700" letter-spacing="1">02 · THE MECHANISM</text><text x="45" y="431" fill="#27362e" font-size="13" font-weight="600">A hidden pigment story</text><circle cx="303" cy="417" r="12" fill="#f0f1e9"/><path d="m300 414 6 3-6 3" fill="none" stroke="#69765d"/>
+      <rect x="26" y="462" width="303" height="72" rx="12" fill="#fff" stroke="#e0e4d9"/><rect x="26" y="462" width="5" height="72" rx="2" fill="#8da6c8"/><text x="45" y="485" fill="#8b927d" font-size="8" font-weight="700" letter-spacing="1">03 · THE REVEAL</text><text x="45" y="512" fill="#27362e" font-size="13" font-weight="600">Gold and red were there all along</text><circle cx="303" cy="498" r="12" fill="#f0f1e9"/><path d="m300 495 6 3-6 3" fill="none" stroke="#69765d"/>
+      <rect x="26" y="543" width="303" height="58" rx="12" fill="#fff" stroke="#e0e4d9"/><rect x="26" y="543" width="5" height="58" rx="2" fill="#b48aca"/><text x="45" y="566" fill="#8b927d" font-size="8" font-weight="700" letter-spacing="1">04 · THE TAKEAWAY</text><text x="45" y="587" fill="#27362e" font-size="12" font-weight="600">Fall is a color reveal.</text>
+    </g>
+    <text x="28" y="625" fill="#798276" font-size="9">Tap any beat to edit its words or visual.</text>
+    <rect x="26" y="640" width="302" height="30" rx="10" fill="#d5ed86"/>
+    <text x="177" y="660" text-anchor="middle" fill="#26352a" font-size="10" font-weight="700">Looks like a story  →</text>
+  </g>
+
+  <!-- Screen 3: preview and export -->
+  <g transform="translate(992 188)" filter="url(#shadow)" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect width="354" height="690" rx="44" fill="#18251f"/>
+    <rect x="9" y="9" width="336" height="672" rx="37" fill="#fffef9"/>
+    <rect x="130" y="10" width="94" height="20" rx="10" fill="#18251f"/>
+    <text x="30" y="52" fill="#1c2b24" font-size="12" font-weight="700">9:41</text>
+    <path d="m37 94-7 7 7 7" fill="none" stroke="#53664a" stroke-width="2"/><text x="52" y="104" fill="#64735d" font-size="11">PREVIEW</text>
+    <text x="28" y="145" fill="#1c2b24" font-family="Georgia, serif" font-size="26">One last look.</text><text x="309" y="140" text-anchor="end" fill="#798476" font-size="9">9:16 · 00:38</text>
+    <rect x="63" y="166" width="228" height="362" rx="14" fill="#142824"/>
+    <rect x="71" y="174" width="212" height="346" rx="9" fill="url(#photo)"/>
+    <circle cx="178" cy="276" r="66" fill="none" stroke="#e4eece" stroke-opacity=".55"/>
+    <circle cx="178" cy="276" r="45" fill="none" stroke="#d2ebbb" stroke-opacity=".42"/>
+    <path d="M178 336C115 312 123 247 164 226c6 47 32 56 14 110z" fill="url(#leaf)"/>
+    <path d="M177 330c15-45 34-62 68-74-2 37-23 69-68 74z" fill="#a8cc70"/><path d="M162 296 207 258M179 321l31-43" stroke="#eef1d0" stroke-opacity=".7" stroke-width="1.5"/>
+    <rect x="83" y="408" width="188" height="57" rx="9" fill="#15241f" fill-opacity=".88"/>
+    <text x="177" y="431" text-anchor="middle" fill="#fffef9" font-family="Georgia, serif" font-size="12">Gold and red were</text><text x="177" y="449" text-anchor="middle" fill="#fffef9" font-family="Georgia, serif" font-size="12">hiding in the leaf.</text>
+    <circle cx="177" cy="494" r="16" fill="#fffef9" fill-opacity=".94"/><path d="m174 486 11 8-11 8z" fill="#334338"/>
+    <text x="28" y="555" fill="#7e8978" font-size="8" font-weight="700" letter-spacing="1.3">SCENES · TAP TO JUMP</text>
+    <rect x="28" y="568" width="66" height="39" rx="6" fill="url(#photo)"/><rect x="102" y="568" width="66" height="39" rx="6" fill="#739a73"/><rect x="176" y="568" width="66" height="39" rx="6" fill="#e0a06a"/><rect x="250" y="568" width="66" height="39" rx="6" fill="#6b7da5"/>
+    <rect x="27" y="565" width="68" height="45" rx="7" fill="none" stroke="#81984e" stroke-width="2"/>
+    <text x="28" y="630" fill="#788278" font-size="9">Your source images can style covers and transitions.</text>
+    <rect x="26" y="642" width="181" height="30" rx="9" fill="#203029"/><text x="116" y="661" text-anchor="middle" fill="#fffef9" font-size="9" font-weight="700">Export MP4 ↓</text>
+    <rect x="215" y="642" width="113" height="30" rx="9" fill="#e9eedc"/><text x="271" y="661" text-anchor="middle" fill="#40513a" font-size="9" font-weight="600">Share ↗</text>
+  </g>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif" fill="#6f7b6c" font-size="11" letter-spacing="1.3" font-weight="700">
+    <text x="271" y="920" text-anchor="middle">01 · MAKE</text><text x="720" y="920" text-anchor="middle">02 · SHAPE</text><text x="1169" y="920" text-anchor="middle">03 · WATCH + SHARE</text>
+  </g>
+</svg>

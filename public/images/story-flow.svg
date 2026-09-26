@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="500" viewBox="0 0 1440 500" role="img" aria-labelledby="title desc">
+  <title id="title">The Educative Yap story flow</title>
+  <desc id="desc">A concept diagram showing an idea becoming narration, editable scenes, and a shareable video.</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10112b" />
+      <stop offset="0.55" stop-color="#19143e" />
+      <stop offset="1" stop-color="#101e38" />
+    </linearGradient>
+    <linearGradient id="idea" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffb36b" /><stop offset="1" stop-color="#ff6e8d" />
+    </linearGradient>
+    <linearGradient id="voice" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#b68cff" /><stop offset="1" stop-color="#765bff" />
+    </linearGradient>
+    <linearGradient id="scenes" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#54d8e6" /><stop offset="1" stop-color="#5484ff" />
+    </linearGradient>
+    <linearGradient id="video" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#a2edbd" /><stop offset="1" stop-color="#43c7b3" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="100%">
+      <stop stop-color="#8a58ff" stop-opacity=".24" /><stop offset="1" stop-color="#8a58ff" stop-opacity="0" />
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#050716" flood-opacity=".42" />
+    </filter>
+  </defs>
+  <rect width="1440" height="500" rx="32" fill="url(#canvas)" />
+  <rect width="1440" height="500" rx="32" fill="url(#glow)" />
+  <g fill="#fff" opacity=".14">
+    <circle cx="94" cy="94" r="2"/><circle cx="1344" cy="102" r="2"/><circle cx="1240" cy="416" r="2"/>
+    <circle cx="108" cy="404" r="2"/><circle cx="690" cy="58" r="2"/><circle cx="812" cy="438" r="2"/>
+  </g>
+  <text x="96" y="94" fill="#aeb3d4" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" letter-spacing="3">FROM A GOOD IDEA TO A VIDEO WORTH SHARING</text>
+  <g filter="url(#shadow)">
+    <rect x="84" y="150" width="270" height="244" rx="26" fill="#222240" stroke="#ffffff" stroke-opacity=".11" />
+    <rect x="420" y="150" width="270" height="244" rx="26" fill="#222240" stroke="#ffffff" stroke-opacity=".11" />
+    <rect x="756" y="150" width="270" height="244" rx="26" fill="#222240" stroke="#ffffff" stroke-opacity=".11" />
+    <rect x="1092" y="150" width="270" height="244" rx="26" fill="#222240" stroke="#ffffff" stroke-opacity=".11" />
+  </g>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <circle cx="142" cy="212" r="25" fill="url(#idea)" />
+    <path d="M134 211h16m-8-8v16" stroke="#321b42" stroke-width="3" stroke-linecap="round" />
+    <text x="120" y="285" fill="#fff" font-size="25" font-weight="700">A spark</text>
+    <text x="120" y="326" fill="#b9bbd4" font-size="16">Topic + useful references</text>
+
+    <circle cx="478" cy="212" r="25" fill="url(#voice)" />
+    <path d="M466 213c5-18 7 18 12 0s7 18 12 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+    <text x="456" y="285" fill="#fff" font-size="25" font-weight="700">A story</text>
+    <text x="456" y="326" fill="#b9bbd4" font-size="16">Narration + pacing</text>
+
+    <circle cx="814" cy="212" r="25" fill="url(#scenes)" />
+    <rect x="802" y="200" width="24" height="24" rx="4" fill="none" stroke="#fff" stroke-width="2.5" />
+    <path d="m805 220 7-8 5 5 4-4 5 7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="792" y="285" fill="#fff" font-size="25" font-weight="700">Scene craft</text>
+    <text x="792" y="326" fill="#b9bbd4" font-size="16">Editable visuals + motion</text>
+
+    <circle cx="1150" cy="212" r="25" fill="url(#video)" />
+    <path d="m1145 202 14 10-14 10z" fill="#123641" />
+    <text x="1128" y="285" fill="#fff" font-size="25" font-weight="700">A short film</text>
+    <text x="1128" y="326" fill="#b9bbd4" font-size="16">Review + vertical export</text>
+  </g>
+  <g fill="none" stroke="#b5a5ff" stroke-width="2" stroke-dasharray="5 8" opacity=".8">
+    <path d="M354 272h54"/><path d="M690 272h54"/><path d="M1026 272h54"/>
+  </g>
+  <g fill="#c8baff">
+    <path d="m407 266 10 6-10 6z"/><path d="m743 266 10 6-10 6z"/><path d="m1079 266 10 6-10 6z"/>
+  </g>
+  <text x="96" y="454" fill="#7f84aa" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14">A proposed workflow · the product is under active development</text>
+</svg>
