@@ -35,6 +35,29 @@
             <span>01 / THE IDEA</span><span id="connection">CONNECTING…</span>
           </div>
           <form id="prompt-form">
+            <label for="video-mode">Video style</label>
+            <select id="video-mode">
+              <option value="narrated">Animated explainer · AI voice</option>
+              <option value="presenter">
+                Me + explainer visuals · My voice
+              </option>
+            </select>
+            <div id="presenter-inputs" hidden>
+              <p class="muted">
+                Visuals above. You below. Your voice stays yours.
+              </p>
+              <label for="presenter-video">Your video</label
+              ><input id="presenter-video" type="file" accept="video/*" />
+              <label for="presenter-voice">Separate voiceover (optional)</label
+              ><input id="presenter-voice" type="file" accept="audio/*" />
+              <p class="muted">
+                3–60 seconds · up to 250 MB per file. A separate voiceover
+                replaces the video's audio and must already be aligned to it.
+                Audio is sent to OpenAI for transcription; your video stays
+                local.
+              </p>
+              <div id="upload-status" class="muted" role="status"></div>
+            </div>
             <label for="prompt">What are we explaining?</label
             ><textarea
               id="prompt"
@@ -61,7 +84,7 @@
               </button>
             </div>
             <div class="form-bottom">
-              <span>9:16 · AI voice · Motion · MP4</span
+              <span id="format-hint">9:16 · AI voice · Motion · MP4</span
               ><button id="create" type="submit">
                 Make a little video <span>↗</span>
               </button>
@@ -101,7 +124,7 @@
       </section>
       <footer>
         <span>BUILT WITH TRUEFORGE + HYPERFRAMES</span
-        ><span>AI-generated narration · Local rendering · Your ideas</span>
+        ><span>Your voice or AI narration · Local rendering</span>
       </footer>
     </main>
     <script src="/app.js" type="module"></script>

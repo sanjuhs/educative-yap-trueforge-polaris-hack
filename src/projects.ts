@@ -1,3 +1,8 @@
+import {
+  getPresenter,
+  presenterTimeline,
+  combinePresenter,
+} from "./presenter.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -67,6 +72,8 @@ export function publicProject(p: Project) {
 }
 export async function createProject(input: Plan) {
   const plan = planSchema.parse(input);
+  if (plan.presenterAssetId)
+    presenterTimeline(plan, await getPresenter(plan.presenterAssetId));
   if (
     listProjects().filter((p) => !["complete", "failed"].includes(p.status))
       .length >= 3
@@ -139,29 +146,35 @@ async function renderProject(p: Project) {
     });
   p.status = "narrating";
   await save(p);
-  const scenes: TimedScene[] = [];
-  let cursor = 0;
-  for (const [i, s] of p.plan.scenes.entries()) {
-    p.progress = `Recording narration ${i + 1}/${p.plan.scenes.length}`;
-    await save(p);
-    const response = await client.audio.speech.create({
-      model: config.ttsModel,
-      voice: p.plan.voice,
-      input: s.narration,
-      instructions:
-        "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
-      response_format: "wav",
-    });
-    const audio = `voice-${i}.wav`;
-    await fs.writeFile(
-      path.join(dir, audio),
-      Buffer.from(await response.arrayBuffer()),
-    );
-    const meta = await probe(path.join(dir, audio));
-    const duration = Number(meta.format.duration) + 0.25;
-    scenes.push({ ...s, start: cursor, duration, audio });
-    cursor += duration;
-  }
+  const presenter = p.plan.presenterAssetId
+    ? await getPresenter(p.plan.presenterAssetId)
+    : undefined;
+  const scenes: TimedScene[] = presenter
+    ? presenterTimeline(p.plan, presenter)
+    : [];
+  let cursor = presenter?.duration || 0;
+  if (!presenter)
+    for (const [i, s] of p.plan.scenes.entries()) {
+      p.progress = `Recording narration ${i + 1}/${p.plan.scenes.length}`;
+      await save(p);
+      const response = await client.audio.speech.create({
+        model: config.ttsModel,
+        voice: p.plan.voice,
+        input: s.narration,
+        instructions:
+          "Warm, curious science explainer. Conversational, crisp, energetic, never salesy. Brisk pace with clear emphasis. No extra words.",
+        response_format: "wav",
+      });
+      const audio = `voice-${i}.wav`;
+      await fs.writeFile(
+        path.join(dir, audio),
+        Buffer.from(await response.arrayBuffer()),
+      );
+      const meta = await probe(path.join(dir, audio));
+      const duration = Number(meta.format.duration) + 0.25;
+      scenes.push({ ...s, start: cursor, duration, audio });
+      cursor += duration;
+    }
   if (cursor > 60)
     throw new Error(
       `Narration is ${cursor.toFixed(1)} seconds. Shorten the script and create a new version (maximum 60 seconds).`,
@@ -174,7 +187,7 @@ async function renderProject(p: Project) {
   );
   await fs.writeFile(
     path.join(dir, "index.html"),
-    composition(p.plan, scenes, cursor),
+    composition(p.plan, scenes, cursor, presenter?.captions),
   );
   await fs.writeFile(
     path.join(dir, "storyboard.json"),
@@ -208,6 +221,13 @@ async function renderProject(p: Project) {
       },
     },
   );
+  let narratedFile = path.join(dir, "render.mp4");
+  if (presenter) {
+    p.progress = "Combining your recording with the explainer visuals";
+    await save(p);
+    await combinePresenter(dir, presenter);
+    narratedFile = path.join(dir, "presenter.mp4");
+  }
   if (p.plan.music) {
     p.progress = "Mixing narration with an original ambient soundtrack";
     await save(p);
@@ -215,7 +235,7 @@ async function renderProject(p: Project) {
     await run("ffmpeg", [
       "-y",
       "-i",
-      path.join(dir, "render.mp4"),
+      narratedFile,
       "-i",
       path.join(dir, "music.wav"),
       "-filter_complex",
@@ -234,11 +254,7 @@ async function renderProject(p: Project) {
       "+faststart",
       path.join(dir, "video.mp4"),
     ]);
-  } else
-    await fs.copyFile(
-      path.join(dir, "render.mp4"),
-      path.join(dir, "video.mp4"),
-    );
+  } else await fs.copyFile(narratedFile, path.join(dir, "video.mp4"));
   const meta = await probe(path.join(dir, "video.mp4"));
   const video = meta.streams.find(
     (s: { codec_type: string }) => s.codec_type === "video",

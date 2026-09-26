@@ -1,5 +1,13 @@
 import { z } from "zod";
 export const sceneSchema = z.object({
+  startSeconds: z
+    .number()
+    .min(0)
+    .max(60)
+    .optional()
+    .describe(
+      "Presenter mode only: when this visual begins in the original recording; first scene starts at 0",
+    ),
   title: z.string().min(1).max(65).describe("Short, punchy on-screen headline"),
   narration: z
     .string()
@@ -23,6 +31,13 @@ export const sceneSchema = z.object({
 });
 export const planSchema = z
   .object({
+    presenterAssetId: z
+      .string()
+      .uuid()
+      .optional()
+      .describe(
+        "Uploaded presenter recording ID; keeps the real video and voice, never generates TTS",
+      ),
     title: z.string().min(1).max(90),
     summary: z.string().min(1).max(400),
     voice: z.enum(["marin", "cedar", "coral", "alloy"]).default("marin"),
@@ -37,7 +52,7 @@ export const planSchema = z
       (sum, s) => sum + s.narration.trim().split(/\s+/).length,
       0,
     );
-    if (words > 135)
+    if (!plan.presenterAssetId && words > 135)
       ctx.addIssue({
         code: "custom",
         message: "Keep the whole script at 135 words or fewer.",

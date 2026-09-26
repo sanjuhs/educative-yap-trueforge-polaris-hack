@@ -447,3 +447,31 @@ footer {
     display: none;
   }
 }
+#video-mode {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+#presenter-inputs {
+  padding: 8px 0 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 15px;
+}
+#presenter-inputs label {
+  font-size: 13px;
+  margin: 15px 0 8px;
+}
+#presenter-inputs input {
+  font: inherit;
+  font-size: 12px;
+  width: 100%;
+}
+#presenter-inputs p {
+  line-height: 1.6;
+}

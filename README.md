@@ -54,11 +54,25 @@ video tools.
 - Chat revisions; each version keeps its editable HTML, storyboard, and audio on disk.
 - Export checks for vertical dimensions and an audio stream.
 
-Captions use approximate phrase timing. This first version accepts **text topics
-and pasted context**; recording uploads, transcription, precise word alignment,
-custom generated scene code, and Remotion/Manim adapters are future iterations.
-Visuals use controlled templates, so this is a starting point for creative
-iteration rather than a full timeline editor. Outputs are limited to 60 seconds.
+## Use your own video and voice
+
+Choose **Me + explainer visuals · My voice** in the studio, then upload your
+video. The upper 1080 × 1080 panel shows timed explainer visuals and captions;
+the lower 1080 × 840 panel keeps your video, fitted without cropping. The original
+voice is preserved; this mode does not generate AI narration.
+
+An optional separate voiceover replaces the video's audio. It must already
+start in sync with the video and match its duration within 0.75 seconds. Automatic
+lip-sync, offset correction, and retiming are not included. Uploads support
+3–60 second recordings, up to 250 MB per file; FFmpeg checks the actual media.
+
+Your video stays local. Audio is sent to OpenAI for timestamped transcription,
+and the transcript is given to TrueForge to plan scene changes. Presenter
+captions follow transcription word timestamps, which may need correction for
+unclear speech. Animated explainers still use approximate phrase timing.
+
+Visuals use controlled templates. Arbitrary generated scene code and
+Remotion/Manim adapters are future iterations. Outputs are limited to 60 seconds.
 
 ## Configuration
 

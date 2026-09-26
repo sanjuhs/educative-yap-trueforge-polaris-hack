@@ -6,6 +6,7 @@ let sessionId = sessionStorage.getItem("yap-session") || undefined,
   busy = !!activeTurn,
   lastPreview = "",
   latestId;
+let presenterAssetId;
 const safe = (s) =>
   String(s).replace(
     /[&<>"']/g,
@@ -90,6 +91,8 @@ function assistantText(turn) {
   return [...new Set(texts)].join("\n\n");
 }
 async function tick() {
+  for (const id of ["#video-mode", "#presenter-video", "#presenter-voice"])
+    $(id).disabled = busy;
   try {
     const health = await api("/api/health");
     $("#connection").textContent = health.ready
@@ -135,14 +138,44 @@ async function tick() {
 $("#prompt-form").onsubmit = async (event) => {
   event.preventDefault();
   if (busy) return;
-  const message = $("#prompt").value.trim();
+  const presenterMode = $("#video-mode").value === "presenter";
+  const message =
+    $("#prompt").value.trim() ||
+    (presenterMode
+      ? "Add explainer visuals above my video, following my narration."
+      : "");
   if (!message) return;
+  if (presenterMode && !presenterAssetId && !$("#presenter-video").files[0]) {
+    activity("Choose your video first.", true);
+    return;
+  }
   busy = true;
   $("#create").disabled = true;
   $("#chat-log").textContent = "";
   activity("TrueForge is planning your story and choosing the visuals…");
   try {
-    const result = await api("/api/chat", { message, sessionId });
+    if (presenterMode && !presenterAssetId) {
+      activity("Uploading your recording and transcribing your voice…");
+      const form = new FormData();
+      form.append("video", $("#presenter-video").files[0]);
+      if ($("#presenter-voice").files[0])
+        form.append("voiceover", $("#presenter-voice").files[0]);
+      const response = await fetch("/api/presenter", {
+        method: "POST",
+        body: form,
+      });
+      const asset = await response.json();
+      if (!response.ok) throw new Error(asset.error || "Upload failed");
+      presenterAssetId = asset.id;
+      $("#upload-status").textContent =
+        `Ready · ${Math.round(asset.duration)} seconds · Your original voice`;
+    }
+    activity("TrueForge is planning your visuals…");
+    const result = await api("/api/chat", {
+      message,
+      sessionId,
+      ...(presenterMode ? { presenterAssetId } : {}),
+    });
     sessionId = result.sessionId;
     activeTurn = result.turnId;
     sessionStorage.setItem("yap-session", sessionId);
@@ -173,3 +206,20 @@ $("#new-chat").onclick = () => {
 $("#new-chat").hidden = !sessionId;
 $("#create").disabled = busy;
 void tick();
+
+function resetRecording() {
+  presenterAssetId = undefined;
+  $("#upload-status").textContent = "";
+}
+$("#presenter-video").onchange = resetRecording;
+$("#presenter-voice").onchange = resetRecording;
+$("#video-mode").onchange = () => {
+  const presenter = $("#video-mode").value === "presenter";
+  $("#presenter-inputs").hidden = !presenter;
+  $("#prompt").required = !presenter;
+  $("#format-hint").textContent = presenter
+    ? "9:16 · Your voice · Visuals above"
+    : "9:16 · AI voice · Motion · MP4";
+  sessionId = undefined;
+  sessionStorage.removeItem("yap-session");
+};
