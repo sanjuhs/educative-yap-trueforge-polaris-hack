@@ -26,6 +26,15 @@ test("upload rejects SVG bytes and unsupported file types", async () => {
       }),
       /Choose a PNG/,
     );
+    await fs.writeFile(file, "#EXTM3U\n#EXTINF:4,\n/etc/passwd\n");
+    await assert.rejects(
+      normalizeUploadedAsset({
+        path: file,
+        originalname: "fake.mp4",
+        mimetype: "video/mp4",
+      }),
+      /Choose a PNG/,
+    );
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }

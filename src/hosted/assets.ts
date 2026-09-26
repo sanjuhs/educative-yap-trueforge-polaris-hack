@@ -78,7 +78,14 @@ export async function ensureSourceAsset(kind: AssetKind, id: string) {
   };
   if (kind === "image") {
     await restore("image", visualAssetPath(id));
-    await restore("asset.json", visualAssetPath(id) + ".json");
+    if (files["asset.json"])
+      await restore("asset.json", visualAssetPath(id) + ".json");
+    else
+      await fs.writeFile(
+        visualAssetPath(id) + ".json",
+        JSON.stringify(asset.metadata),
+        { mode: 0o600 },
+      );
   } else if (kind === "presenter") {
     for (const name of ["original-video", "voice.wav", "asset.json"])
       await restore(name, path.join(presenterDir(id), name));

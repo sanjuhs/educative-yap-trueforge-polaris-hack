@@ -49,7 +49,7 @@ export function rasterType(bytes: Buffer) {
   return undefined;
 }
 
-async function inspect(file: string) {
+async function inspect(file: string, demuxer = "mov") {
   return JSON.parse(
     await run(
       "ffprobe",
@@ -58,6 +58,8 @@ async function inspect(file: string) {
         "error",
         "-protocol_whitelist",
         "file,pipe",
+        "-f",
+        demuxer,
         "-show_format",
         "-show_streams",
         "-of",
@@ -87,10 +89,24 @@ export async function normalizeUploadedAsset(
   }
   const imageType = rasterType(prefix);
   const isImage = Boolean(imageType);
+  const videoDemuxer =
+    prefix.toString("ascii", 4, 8) === "ftyp"
+      ? "mov"
+      : prefix.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))
+        ? "matroska"
+        : undefined;
+  const demuxer =
+    imageType === "image/png"
+      ? "png_pipe"
+      : imageType === "image/jpeg"
+        ? "jpeg_pipe"
+        : imageType === "image/webp"
+          ? "webp_pipe"
+          : videoDemuxer;
   if (
     !isImage &&
     (!/^video\/(mp4|quicktime|webm|x-matroska)$/.test(file.mimetype) ||
-      prefix.includes(Buffer.from("<svg")))
+      !videoDemuxer)
   ) {
     throw badRequest(
       "Choose a PNG, JPEG, WebP image or an MP4, MOV, WebM video",
@@ -100,7 +116,7 @@ export async function normalizeUploadedAsset(
     throw badRequest(
       isImage ? "Images must be under 20 MiB" : "Clips must be under 100 MiB",
     );
-  const info = await inspect(file.path);
+  const info = await inspect(file.path, demuxer!);
   const video = info.streams.find((s: any) => s.codec_type === "video");
   if (
     !video ||
@@ -132,6 +148,8 @@ export async function normalizeUploadedAsset(
           "-y",
           "-protocol_whitelist",
           "file,pipe",
+          "-f",
+          demuxer!,
           "-threads",
           "1",
           "-i",
@@ -157,8 +175,8 @@ export async function normalizeUploadedAsset(
         ...common,
         id,
         creator: "Your uploaded image",
-        sourceUrl: `upload://${id}`,
-        imageUrl: `upload://${id}`,
+        sourceUrl: `https://educative-yap.invalid/uploads/${id}`,
+        imageUrl: `https://educative-yap.invalid/uploads/${id}`,
         license: "User-provided; rights not independently verified",
         licenseUrl: "",
         contentType: "image/png",
@@ -202,6 +220,8 @@ export async function normalizeUploadedAsset(
         "-y",
         "-protocol_whitelist",
         "file,pipe",
+        "-f",
+        demuxer!,
         "-ss",
         String(meta.startSeconds),
         "-i",
@@ -256,7 +276,7 @@ export async function normalizeUploadedAsset(
       channel: "Your uploads",
       channelUrl: "",
       creator: "Uploader",
-      sourceUrl: `upload://${id}`,
+      sourceUrl: `https://educative-yap.invalid/uploads/${id}`,
       sourceStart: meta.startSeconds,
       sourceEnd: meta.startSeconds + seconds,
       duration: seconds,
@@ -432,7 +452,12 @@ export function createAssetUploadRouter() {
       "X-Content-Type-Options": "nosniff",
     });
     res
-      .type(kind === "image" ? "png" : "mp4")
+      .type(
+        kind === "image"
+          ? record?.metadata?.contentType ||
+              (await readVisualAsset(id)).contentType
+          : "mp4",
+      )
       .sendFile(file, { dotfiles: "allow" });
   });
   return router;

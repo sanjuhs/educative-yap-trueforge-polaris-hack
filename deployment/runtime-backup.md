@@ -23,3 +23,14 @@ Verification on 2026-09-26 authenticated the original 581,065,520-byte archive, 
 ```sh
 python -m unittest discover -s deployment
 ```
+
+The private release also contains `educative-yap-hosted-config-2026-09-26.json.aes`, a separately authenticated snapshot of the new hosted deployment settings, including the R2 encryption key. It uses the same privately retained recovery key. This is a JSON payload, not the runtime tar archive. Recover it without printing secrets:
+
+```sh
+python deployment/decrypt-hosted-config.py \
+  --archive /private/backup/educative-yap-hosted-config-2026-09-26.json.aes \
+  --key /private/offline/recovery.key \
+  --output /private/recovered-hosted-config.json
+```
+
+The output must not already exist. Store recovered configuration in a secret manager; never add it to a source checkout. Future credential rotations require updating this recovery snapshot.

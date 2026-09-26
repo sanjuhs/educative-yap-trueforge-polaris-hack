@@ -217,7 +217,9 @@ function makeMcp(settings: GenerationSettings) {
         throw new Error(
           "Preview and vision review must pass before rendering. Call preview_design again.",
         );
-      const p = await createProject(await readDesign(design_id));
+      const plan = await readDesign(design_id);
+      await assertPlanAssets(plan);
+      const p = await createProject(plan);
       return reply({
         id: p.id,
         title: p.plan.title,

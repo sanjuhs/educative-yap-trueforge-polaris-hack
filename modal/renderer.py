@@ -42,7 +42,7 @@ def check_bundle(bundle: bytes):
     with tarfile.open(fileobj=io.BytesIO(bundle), mode="r:gz") as archive:
         members = archive.getmembers()
         files = [m for m in members if m.isfile()]
-        if len(members) > 1100 or sum(m.size for m in files) > MAX_OUTPUT:
+        if len(members) > 5000 or sum(m.size for m in files) > MAX_OUTPUT:
             raise ValueError("Render bundle expanded size/file count exceeds limit")
         for member in members:
             if not member.isfile() or member.name.startswith("/") or ".." in Path(member.name).parts:
