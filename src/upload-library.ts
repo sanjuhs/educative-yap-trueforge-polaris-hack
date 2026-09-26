@@ -24,6 +24,32 @@ const uploadMetadataSchema = z.object({
   durationSeconds: z.coerce.number().finite().min(3).max(5).default(5),
 });
 type UploadMetadata = z.input<typeof uploadMetadataSchema>;
+const trimRangeSchema = z.object({
+  fileIndex: z.number().int().min(0).max(7),
+  startSeconds: z.number().finite().min(0).max(27),
+  durationSeconds: z.number().finite().min(3).max(5),
+});
+export function parseClipTrimRanges(value: unknown, fileCount: number) {
+  if (value === undefined)
+    return new Map<number, z.infer<typeof trimRangeSchema>>();
+  let decoded: unknown;
+  try {
+    decoded = typeof value === "string" ? JSON.parse(value) : value;
+  } catch {
+    throw badRequest("Clip selections must be valid JSON");
+  }
+  const ranges = z.array(trimRangeSchema).max(8).parse(decoded),
+    result = new Map<number, z.infer<typeof trimRangeSchema>>();
+  for (const range of ranges) {
+    if (range.fileIndex >= fileCount || result.has(range.fileIndex))
+      throw badRequest(
+        "Each clip selection must refer to one unique uploaded file",
+      );
+    result.set(range.fileIndex, range);
+  }
+  return result;
+}
+
 const filename = (name: string) =>
   path
     .basename(name)
@@ -201,10 +227,16 @@ export async function normalizeUploadedAsset(
       sourceDuration > 30.1
     )
       throw badRequest("Upload a clip between 3 and 30 seconds long");
-    const duration = Math.min(
-      meta.durationSeconds,
-      sourceDuration - meta.startSeconds,
-    );
+    const remaining = sourceDuration - meta.startSeconds;
+    const requestedDuration =
+      metadata.durationSeconds === undefined
+        ? Math.min(5, remaining)
+        : meta.durationSeconds;
+    if (meta.startSeconds + requestedDuration > sourceDuration + 0.05)
+      throw badRequest(
+        "The selected excerpt extends beyond the end of the video. Move the start earlier or shorten it.",
+      );
+    const duration = Math.min(requestedDuration, remaining);
     if (duration < 3)
       throw badRequest(
         "Choose a start time leaving at least 3 seconds of video",
@@ -408,11 +440,17 @@ export function createAssetUploadRouter() {
                 .map((s: string) => s.trim())
                 .filter(Boolean);
           const meta = uploadMetadataSchema.parse({ ...req.body, tags });
+          const trims = parseClipTrimRanges(req.body.trimRanges, files.length);
           const assets = [];
-          for (const file of files) {
+          for (const [fileIndex, file] of files.entries()) {
+            const trim = trims.get(fileIndex);
+            const selection = { ...meta, ...trim };
+            // Keep the established default for short uploads when no length was explicitly selected.
+            if (!trim && req.body.durationSeconds === undefined)
+              delete (selection as Partial<typeof selection>).durationSeconds;
             const asset = await normalizeUploadedAsset(
               file,
-              meta,
+              selection,
               currentOwner() || "local",
             );
             await persist(asset);

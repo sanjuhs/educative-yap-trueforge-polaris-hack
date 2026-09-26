@@ -157,6 +157,15 @@ async function tick() {
     if (!generationOptions) await loadGenerationOptions();
     projects = await api("/api/projects");
     renderLibrary();
+    if (
+      !busy &&
+      !activeJob &&
+      !activeTurn &&
+      $("#activity").textContent === "Welcome back. Your collection is loading…"
+    )
+      activity(
+        "Your collection is ready. Choose a video or start a new explainer.",
+      );
     if (activeJob) {
       const result = await api(`/api/jobs/${encodeURIComponent(activeJob)}`);
       const job = result.job || result;
@@ -674,6 +683,8 @@ $("#logout").onclick = async () => {
     projects = [];
     libraryAssets = [];
     selectedAssetIds.clear();
+    clearClipPreviews();
+    $("#library-files").value = "";
     $("#asset-library-list").replaceChildren();
     lastPreview = latestId = selectedId = undefined;
     $("#account-controls").hidden = true;
@@ -726,6 +737,112 @@ $("#create-user-form").onsubmit = async (event) => {
   }
 };
 
+const clipSelections = new Map();
+let clipPreviewUrls = [];
+function clearClipPreviews() {
+  for (const video of document.querySelectorAll("#library-clip-previews video"))
+    video.pause();
+  for (const url of clipPreviewUrls) URL.revokeObjectURL(url);
+  clipPreviewUrls = [];
+  clipSelections.clear();
+  $("#library-clip-previews").replaceChildren();
+}
+window.addEventListener("pagehide", clearClipPreviews);
+$("#library-files").onchange = () => {
+  clearClipPreviews();
+  const files = [...$("#library-files").files];
+  files.forEach((file, index) => {
+    if (
+      !file.type.startsWith("video/") &&
+      !/\.(mp4|mov|webm|mkv)$/i.test(file.name)
+    )
+      return;
+    const url = URL.createObjectURL(file);
+    clipPreviewUrls.push(url);
+    const card = document.createElement("section");
+    card.className = "clip-trim-card";
+    card.innerHTML = `<strong>${safe(file.name)}</strong><video controls muted playsinline preload="metadata"></video><p class="muted clip-trim-summary" role="status">Loading source preview…</p><label for="clip-start-${index}">Excerpt starts at <output class="clip-start-label">0.0s</output></label><input id="clip-start-${index}" type="range" min="0" max="27" step="0.1" value="0"><label for="clip-length-${index}">Excerpt length <output class="clip-length-label">5.0s</output></label><input id="clip-length-${index}" type="range" min="3" max="5" step="0.1" value="5"><button type="button" class="text-button clip-play-excerpt">Play selected excerpt ▶</button>`;
+    $("#library-clip-previews").append(card);
+    const video = card.querySelector("video"),
+      start = card.querySelector('[id^="clip-start-"]'),
+      length = card.querySelector('[id^="clip-length-"]'),
+      summary = card.querySelector(".clip-trim-summary");
+    const selection = { fileIndex: index, startSeconds: 0, durationSeconds: 5 };
+    clipSelections.set(index, selection);
+    let sourceDuration,
+      excerptPlaying = false;
+    function update(seek = false) {
+      const finite = Number.isFinite(sourceDuration);
+      start.max = finite
+        ? Math.min(27, Math.max(0, Math.floor((sourceDuration - 3) * 10) / 10))
+        : 27;
+      selection.startSeconds = Math.min(Number(start.value), Number(start.max));
+      start.value = selection.startSeconds;
+      length.max = finite
+        ? Math.min(
+            5,
+            Math.floor((sourceDuration - selection.startSeconds) * 10) / 10,
+          )
+        : 5;
+      selection.durationSeconds = Math.min(
+        Number(length.value),
+        Number(length.max),
+      );
+      length.value = selection.durationSeconds;
+      card.querySelector(".clip-start-label").textContent =
+        selection.startSeconds.toFixed(1) + "s";
+      card.querySelector(".clip-length-label").textContent =
+        selection.durationSeconds.toFixed(1) + "s";
+      const invalid = finite && (sourceDuration < 3 || sourceDuration > 30.1);
+      selection.error = invalid
+        ? "Choose a source clip between 3 and 30 seconds."
+        : file.size > 100 * 1024 * 1024
+          ? "Clips must be under 100 MB."
+          : undefined;
+      summary.textContent =
+        selection.error ||
+        `${selection.startSeconds.toFixed(1)}–${(selection.startSeconds + selection.durationSeconds).toFixed(1)}s${finite ? " of " + sourceDuration.toFixed(1) + "s" : ""} · source audio muted`;
+      start.disabled = length.disabled = invalid;
+      card.querySelector(".clip-play-excerpt").disabled = invalid;
+      if (seek) {
+        excerptPlaying = false;
+        video.pause();
+        video.currentTime = selection.startSeconds;
+      }
+    }
+    video.onloadedmetadata = () => {
+      sourceDuration = video.duration;
+      update();
+    };
+    video.onerror = () => {
+      summary.textContent =
+        "This browser cannot preview the clip. Choose its range manually; the upload will validate it.";
+    };
+    start.oninput = () => update(true);
+    length.oninput = () => update(true);
+    video.ontimeupdate = () => {
+      if (
+        excerptPlaying &&
+        video.currentTime >= selection.startSeconds + selection.durationSeconds
+      ) {
+        video.pause();
+        excerptPlaying = false;
+      }
+    };
+    card.querySelector(".clip-play-excerpt").onclick = async () => {
+      video.currentTime = selection.startSeconds;
+      excerptPlaying = true;
+      try {
+        await video.play();
+      } catch {
+        summary.textContent =
+          "Preview unavailable. The selected timestamps will still be checked during upload.";
+      }
+    };
+    video.src = url;
+    update();
+  });
+};
 function showAssetLibrary() {
   $("#asset-library-list").innerHTML = libraryAssets.length
     ? libraryAssets
@@ -733,7 +850,13 @@ function showAssetLibrary() {
           const metadata = asset.metadata || asset;
           const title =
             metadata.title || metadata.originalFilename || "Untitled asset";
-          return `<label class="asset-library-item"><input type="checkbox" data-asset-id="${safe(asset.id)}" ${selectedAssetIds.has(asset.id) ? "checked" : ""}>${asset.kind === "image" ? `<img class="asset-library-thumb" loading="lazy" alt="" src="/api/assets/${safe(asset.id)}/content">` : '<span class="asset-library-thumb clip-marker" aria-hidden="true">▶</span>'}<span><strong>${safe(title)}</strong><small>${safe(asset.kind || metadata.kind || "asset")} · ${safe(metadata.description || metadata.purpose || metadata.channel || "Saved in your library")}</small></span></label>`;
+          const excerpt =
+            asset.kind === "clip" &&
+            Number.isFinite(metadata.sourceStart) &&
+            Number.isFinite(metadata.sourceEnd)
+              ? ` · ${metadata.sourceStart.toFixed(1)}–${metadata.sourceEnd.toFixed(1)}s from source`
+              : "";
+          return `<label class="asset-library-item"><input type="checkbox" data-asset-id="${safe(asset.id)}" ${selectedAssetIds.has(asset.id) ? "checked" : ""}>${asset.kind === "image" ? `<img class="asset-library-thumb" loading="lazy" alt="" src="/api/assets/${safe(asset.id)}/content">` : '<span class="asset-library-thumb clip-marker" aria-hidden="true">▶</span>'}<span><strong>${safe(title)}</strong><small>${safe(asset.kind || metadata.kind || "asset")}${safe(excerpt)} · ${safe(metadata.description || metadata.purpose || metadata.channel || "Saved in your library")}</small></span></label>`;
         })
         .join("")
     : '<p class="muted">Your imported and uploaded visuals will appear here.</p>';
@@ -772,14 +895,41 @@ $("#upload-library-assets").onclick = async () => {
     $("#library-upload-status").textContent = "Upload up to 8 files at a time.";
     return;
   }
+  const invalid = [...clipSelections.values()].find(
+    (selection) => selection.error,
+  );
+  if (invalid) {
+    $("#library-upload-status").textContent = invalid.error;
+    return;
+  }
   const button = $("#upload-library-assets");
   button.disabled = true;
+  $("#library-files").disabled = true;
   $("#library-upload-status").textContent =
     "Uploading and preparing your visuals…";
   try {
+    if (clipSelections.size) {
+      const capabilities = await api("/api/config");
+      if (!capabilities.clipTrimRanges)
+        throw new Error(
+          "Clip selection is waiting for the studio update. Please try uploading again shortly.",
+        );
+    }
     const form = new FormData();
     for (const file of files) form.append("files", file);
     form.append("description", $("#library-description").value.trim());
+    form.append(
+      "trimRanges",
+      JSON.stringify(
+        [...clipSelections.values()].map(
+          ({ fileIndex, startSeconds, durationSeconds }) => ({
+            fileIndex,
+            startSeconds,
+            durationSeconds,
+          }),
+        ),
+      ),
+    );
     const response = await studioFetch("/api/assets/upload", {
       method: "POST",
       body: form,
@@ -790,6 +940,7 @@ $("#upload-library-assets").onclick = async () => {
     for (const asset of assets)
       if (selectedAssetIds.size < 30) selectedAssetIds.add(asset.id);
     $("#library-files").value = "";
+    clearClipPreviews();
     $("#library-upload-status").textContent =
       `${assets.length} asset${assets.length === 1 ? "" : "s"} ready and selected for your next video.`;
     await refreshAssetLibrary();
@@ -797,5 +948,6 @@ $("#upload-library-assets").onclick = async () => {
     $("#library-upload-status").textContent = error.message;
   } finally {
     button.disabled = false;
+    $("#library-files").disabled = false;
   }
 };

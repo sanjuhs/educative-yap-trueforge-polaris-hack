@@ -69,7 +69,7 @@ flowchart LR
 ## Creative control without fixed templates
 
 - **Custom motion:** causal diagrams, animated maps, procedural objects, camera movement and scene-specific compositions. The [animation skill](skills/animate-explainers/SKILL.md) is included in the director's instructions.
-- **Your own visual library:** upload screenshots, photos and short video clips, select assets for a brief, and let the director arrange them. Imports retain descriptions and source metadata for reuse.
+- **Your own visual library:** upload screenshots, photos and short video clips, select assets for a brief, and let the director arrange them. Preview each 3–30 second source clip and choose its 3–5 second excerpt before uploading. Imports retain descriptions and selected source timestamps for reuse; choose presenter mode to keep your voice.
 - **Visual mix and opening:** set a footage share, photo share, pacing, text density and opening preference—clip first, dynamic graphics or director’s choice.
 - **Real visual assets:** Wikimedia image search and optional autonomous YouTube excerpt search/import. No user-provided link is required. Relevance is checked from actual frames; metadata alone is not historical evidence.
 - **Your performance:** keep your original recording and voice, with background removal or a split-screen composition.

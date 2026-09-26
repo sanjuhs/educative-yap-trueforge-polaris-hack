@@ -329,7 +329,9 @@ export async function startServer() {
       reasoning: config.reasoning,
     }),
   );
-  app.get("/api/config", (_req, res) => res.json({ hosted: hostedEnabled }));
+  app.get("/api/config", (_req, res) =>
+    res.json({ hosted: hostedEnabled, clipTrimRanges: true }),
+  );
   if (hosted) {
     const authOptions = { publicOrigin: publicOrigin() };
     app.use("/api/auth", createAuthRouter(hosted.pool, authOptions));
