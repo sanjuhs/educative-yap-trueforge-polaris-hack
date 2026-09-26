@@ -6,7 +6,7 @@ let sessionId = sessionStorage.getItem("yap-session") || undefined,
   busy = !!activeTurn,
   lastPreview = "",
   latestId;
-let presenterAssetId;
+let presenterAssetId, revisionProjectId;
 const safe = (s) =>
   String(s).replace(
     /[&<>"']/g,
@@ -46,7 +46,27 @@ function show(p) {
     $("#preview").innerHTML =
       `<video controls playsinline preload="metadata" poster="/media/${p.id}/poster.jpg" src="${safe(p.videoUrl)}"></video>`;
     $("#video-actions").innerHTML =
-      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Storyboard ↗</a>`;
+      `<a href="${safe(p.videoUrl)}" download="${safe(p.plan.title)}.mp4">Download MP4 ↓</a><a href="/media/${p.id}/storyboard.json" target="_blank">Animation source ↗</a><button type="button" id="revise-video" class="text-button">Revise this video ↗</button>`;
+    $("#revise-video").onclick = () => {
+      if (busy) return;
+      $("#video-mode").value = p.plan.presenterAssetId
+        ? "presenter"
+        : "narrated";
+      $("#video-mode").dispatchEvent(new Event("change"));
+      revisionProjectId = p.id;
+      presenterAssetId = p.plan.presenterAssetId;
+      if (presenterAssetId) {
+        $("#presenter-mode").value = p.plan.presenterMode || "cutout";
+        $("#upload-status").textContent =
+          "Reusing this video’s recording and transcript";
+      }
+      $("#prompt").placeholder =
+        "What should change? Layout, motion, visual metaphor, presenter placement…";
+      $("#prompt").focus();
+      activity(
+        "Tell Astra how to revise this video. It can rewrite the entire animation.",
+      );
+    };
   } else {
     $("#preview").innerHTML =
       `<div class="progress-frame"><div>${safe(p.status === "failed" ? "This render needs another take." : p.plan.title)}<span>${safe(p.error || p.progress)}</span></div></div>`;
@@ -92,7 +112,12 @@ function assistantText(turn) {
   return [...new Set(texts)].join("\n\n");
 }
 async function tick() {
-  for (const id of ["#video-mode", "#presenter-video", "#presenter-voice"])
+  for (const id of [
+    "#video-mode",
+    "#presenter-video",
+    "#presenter-voice",
+    "#presenter-mode",
+  ])
     $(id).disabled = busy;
   try {
     const health = await api("/api/health");
@@ -101,7 +126,7 @@ async function tick() {
       : "STARTING…";
     $("#forge-link").href = health.forgeUrl;
     $("#model-info").textContent =
-      `${health.model} · ${health.reasoning} reasoning · Directed through TrueForge`;
+      `${health.model} · ${health.reasoning} reasoning · Original animation through TrueForge`;
     projects = await api("/api/projects");
     renderLibrary();
     if (activeTurn) {
@@ -177,7 +202,10 @@ $("#prompt-form").onsubmit = async (event) => {
     const result = await api("/api/chat", {
       message,
       sessionId,
-      ...(presenterMode ? { presenterAssetId } : {}),
+      ...(revisionProjectId ? { revisionProjectId } : {}),
+      ...(presenterMode
+        ? { presenterAssetId, presenterMode: $("#presenter-mode").value }
+        : {}),
     });
     sessionId = result.sessionId;
     activeTurn = result.turnId;
@@ -212,16 +240,18 @@ void tick();
 
 function resetRecording() {
   presenterAssetId = undefined;
+  revisionProjectId = undefined;
   $("#upload-status").textContent = "";
 }
 $("#presenter-video").onchange = resetRecording;
 $("#presenter-voice").onchange = resetRecording;
 $("#video-mode").onchange = () => {
+  revisionProjectId = undefined;
   const presenter = $("#video-mode").value === "presenter";
   $("#presenter-inputs").hidden = !presenter;
   $("#prompt").required = !presenter;
   $("#format-hint").textContent = presenter
-    ? "9:16 · Your voice · Visuals above"
+    ? "9:16 · Your voice · Original motion design"
     : "9:16 · AI voice · Motion · MP4";
   sessionId = undefined;
   sessionStorage.removeItem("yap-session");
@@ -236,5 +266,5 @@ function showUsage(u) {
   }
   const m = u.metrics,
     money = (v) => (v === undefined ? "Unavailable" : `$${v.toFixed(4)}`);
-  panel.innerHTML = `<strong>AI cost estimate · ${money(u.estimatedUsd)}</strong><p>${safe(u.model)} · ${safe(u.reasoning)} reasoning</p><dl><dt>Input tokens</dt><dd>${m.total_input_tokens.toLocaleString()}</dd><dt>Output tokens (includes reasoning)</dt><dd>${m.total_output_tokens.toLocaleString()}</dd><dt>Cached input (included above)</dt><dd>${(m.total_cache_read_tokens || 0).toLocaleString()}</dd><dt>Cache writes (included in input)</dt><dd>${(m.total_cache_write_tokens || 0).toLocaleString()}</dd><dt>Reasoning tokens (included above)</dt><dd>${(m.total_reasoning_tokens || 0).toLocaleString()}</dd><dt>Director · ${u.modelCalls} model calls</dt><dd>${money(u.modelEstimateUsd)}</dd><dt>Audio estimate</dt><dd>${money(u.audioEstimateUsd)}</dd><dt>Net caching discount (after writes)</dt><dd>${money(u.cacheDiscountUsd)}</dd></dl><p>${safe(u.audioBasis)}. ${safe(u.imageAsset || "")}.</p><p>Rendering and status checks make 0 additional model calls.</p><details><summary>How this estimate works</summary><p>Measured TrueForge turn tokens × standard OpenAI prices, ${safe(u.pricingDate)}. ${u.sharedTurn ? "Director cost is shared across multiple outputs from this turn; total is not allocated." : "Includes this generation turn, not previous revisions."} ${safe(u.error || "")}</p><p>Excludes: ${safe(u.exclusions)}</p><a href="${safe(u.pricingSource)}" target="_blank" rel="noreferrer">Pricing source ↗</a></details>`;
+  panel.innerHTML = `<strong>AI cost estimate · ${money(u.estimatedUsd)}</strong><p>${safe(u.model)} · ${safe(u.reasoning)} reasoning</p><dl><dt>Input tokens</dt><dd>${m.total_input_tokens.toLocaleString()}</dd><dt>Output tokens (includes reasoning)</dt><dd>${m.total_output_tokens.toLocaleString()}</dd><dt>Cached input (included above)</dt><dd>${(m.total_cache_read_tokens || 0).toLocaleString()}</dd><dt>Cache writes (included in input)</dt><dd>${(m.total_cache_write_tokens || 0).toLocaleString()}</dd><dt>Reasoning tokens (included above)</dt><dd>${(m.total_reasoning_tokens || 0).toLocaleString()}</dd><dt>Director · ${u.modelCalls} model calls</dt><dd>${money(u.modelEstimateUsd)}</dd><dt>Included vision reviews</dt><dd>${u.visionModelCalls || 0}</dd><dt>Audio estimate</dt><dd>${money(u.audioEstimateUsd)}</dd><dt>Net caching discount (after writes)</dt><dd>${money(u.cacheDiscountUsd)}</dd></dl><p>${safe(u.audioBasis)}. ${safe(u.imageAsset || "")}.</p><p>Rendering and status checks make 0 additional model calls.</p><details><summary>How this estimate works</summary><p>Measured TrueForge turn tokens × standard OpenAI prices, ${safe(u.pricingDate)}. ${u.sharedTurn ? "Director cost is shared across multiple outputs from this turn; total is not allocated." : "Includes this generation turn, not previous revisions."} ${safe(u.error || "")}</p><p>Excludes: ${safe(u.exclusions)}</p><a href="${safe(u.pricingSource)}" target="_blank" rel="noreferrer">Pricing source ↗</a></details>`;
 }

@@ -1,3 +1,4 @@
+import { motionSchema, placementSchema } from "./motion-schema.js";
 import { z } from "zod";
 export const sceneSchema = z.object({
   startSeconds: z
@@ -30,7 +31,7 @@ export const sceneSchema = z.object({
     .optional(),
   visualIntent: z
     .string()
-    .max(240)
+    .max(400)
     .optional()
     .describe(
       "What this visual helps the viewer understand; describe the change they see",
@@ -53,6 +54,9 @@ export const sceneSchema = z.object({
 });
 export const planSchema = z
   .object({
+    motion: motionSchema.optional(),
+    presenterMode: z.enum(["cutout", "split"]).optional(),
+    presenterPlacement: placementSchema.optional(),
     presenterAssetId: z
       .string()
       .uuid()
@@ -67,7 +71,7 @@ export const planSchema = z
       .boolean()
       .default(true)
       .describe("Add a quiet original synthesized ambient bed"),
-    scenes: z.array(sceneSchema).min(3).max(10),
+    scenes: z.array(sceneSchema).min(1).max(16),
   })
   .superRefine((plan, ctx) => {
     const words = plan.scenes.reduce(
@@ -122,6 +126,12 @@ export type Project = {
   duration?: number;
   error?: string;
   audioModel?: string;
+  visualReview?: {
+    model: string;
+    critique: string;
+    usage: any;
+    responseId: string;
+  };
 };
 export function escapeHtml(value: string) {
   return value.replace(

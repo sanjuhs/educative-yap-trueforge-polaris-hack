@@ -1,3 +1,5 @@
+import { compositeCutout } from "./cutout.js";
+import { authoredHtml } from "./render-browser.js";
 import { projectUsage } from "./usage.js";
 import {
   getPresenter,
@@ -16,7 +18,7 @@ import {
   type Project,
   type TimedScene,
 } from "./schema.js";
-import { probe, run } from "./process.js";
+import { probe, run, rendererEnv } from "./process.js";
 const jobs = new Map<string, Project>();
 let queue = Promise.resolve();
 export function projectDir(id: string) {
@@ -188,14 +190,21 @@ export async function renderProject(p: Project) {
     path.join(config.root, "node_modules/gsap/dist/gsap.min.js"),
     path.join(dir, "gsap.min.js"),
   );
-  if (scenes.some((s) => ["web", "photo"].includes(s.visual)))
+  if (p.plan.motion || scenes.some((s) => ["web", "photo"].includes(s.visual)))
     await fs.copyFile(
       path.join(config.root, "assets/cafe.png"),
       path.join(dir, "cafe.png"),
     );
   await fs.writeFile(
     path.join(dir, "index.html"),
-    composition(p.plan, scenes, cursor, presenter?.captions),
+    p.plan.motion
+      ? authoredHtml({
+          plan: p.plan,
+          scenes,
+          duration: cursor,
+          captions: presenter?.captions || [],
+        })
+      : composition(p.plan, scenes, cursor, presenter?.captions),
   );
   await fs.writeFile(
     path.join(dir, "storyboard.json"),
@@ -204,36 +213,125 @@ export async function renderProject(p: Project) {
   p.status = "rendering";
   p.progress = "Rendering animated scenes with HyperFrames";
   await save(p);
-  const safeEnv = { ...process.env };
-  for (const key of Object.keys(safeEnv)) {
-    if (/KEY|SECRET|TOKEN|PASSWORD/.test(key)) delete safeEnv[key];
-  }
-  await run(
-    process.execPath,
-    [
-      path.join(config.root, "node_modules/hyperframes/bin/hyperframes.mjs"),
-      "render",
-      dir,
-      "--output",
-      path.join(dir, "render.mp4"),
-      "--workers",
-      "2",
-      "--quality",
-      "standard",
-    ],
-    {
-      timeout: 900000,
-      env: safeEnv,
-      onOutput: (text) => {
-        void fs.appendFile(path.join(dir, "render.log"), text).catch(() => {});
+  const safeEnv = rendererEnv();
+  if (p.plan.motion) {
+    const captions =
+      presenter?.captions ||
+      scenes.flatMap((s) => {
+        const words = s.narration.split(/\s+/);
+        const chunks = [];
+        for (let i = 0; i < words.length; i += 7)
+          chunks.push(words.slice(i, i + 7).join(" "));
+        return chunks.map((text, i) => ({
+          text,
+          start: s.start + (i * (s.duration - 0.25)) / chunks.length,
+          end: s.start + ((i + 1) * (s.duration - 0.25)) / chunks.length,
+        }));
+      });
+    await fs.writeFile(
+      path.join(dir, "render-input.json"),
+      JSON.stringify({
+        plan: p.plan,
+        scenes,
+        duration: cursor,
+        captions: presenter && p.plan.presenterMode !== "split" ? [] : captions,
+      }),
+    );
+    p.progress = "Rendering Astra's original animation";
+    await save(p);
+    await run(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        path.join(config.root, "src/authored-worker.ts"),
+        dir,
+      ],
+      {
+        timeout: 900000,
+        env: safeEnv,
+        onOutput: (text) => {
+          void fs
+            .appendFile(path.join(dir, "render.log"), text)
+            .catch(() => {});
+        },
       },
-    },
-  );
+    );
+    if (!presenter) {
+      const audioArgs = scenes.flatMap((s) => ["-i", path.join(dir, s.audio)]);
+      const filters =
+        scenes
+          .map(
+            (s, i) =>
+              `[${i + 1}:a]adelay=${Math.round(s.start * 1000)}:all=1[a${i}]`,
+          )
+          .join(";") +
+        ";" +
+        scenes.map((_, i) => `[a${i}]`).join("") +
+        `amix=inputs=${scenes.length}:normalize=0:duration=longest[a]`;
+      await run("ffmpeg", [
+        "-v",
+        "error",
+        "-y",
+        "-i",
+        path.join(dir, "render.mp4"),
+        ...audioArgs,
+        "-filter_complex",
+        filters,
+        "-map",
+        "0:v",
+        "-map",
+        "[a]",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-t",
+        String(cursor),
+        path.join(dir, "narrated.mp4"),
+      ]);
+      await fs.rename(
+        path.join(dir, "narrated.mp4"),
+        path.join(dir, "render.mp4"),
+      );
+    }
+  } else {
+    await run(
+      process.execPath,
+      [
+        path.join(config.root, "node_modules/hyperframes/bin/hyperframes.mjs"),
+        "render",
+        dir,
+        "--output",
+        path.join(dir, "render.mp4"),
+        "--workers",
+        "2",
+        "--quality",
+        "standard",
+      ],
+      {
+        timeout: 900000,
+        env: safeEnv,
+        onOutput: (text) => {
+          void fs
+            .appendFile(path.join(dir, "render.log"), text)
+            .catch(() => {});
+        },
+      },
+    );
+  }
   let narratedFile = path.join(dir, "render.mp4");
   if (presenter) {
     p.progress = "Combining your recording with the explainer visuals";
     await save(p);
-    await combinePresenter(dir, presenter);
+    if (p.plan.motion && p.plan.presenterMode !== "split") {
+      p.progress =
+        "Removing your background locally and compositing the presenter";
+      await save(p);
+      await compositeCutout(dir, presenter, p.plan, (text) => {
+        void fs.appendFile(path.join(dir, "render.log"), text).catch(() => {});
+      });
+    } else await combinePresenter(dir, presenter);
     narratedFile = path.join(dir, "presenter.mp4");
   }
   if (p.plan.music) {

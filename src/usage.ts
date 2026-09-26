@@ -22,6 +22,7 @@ type Run = {
   projectIds: string[];
   metrics?: Record<string, number>;
   modelCalls?: number;
+  visionModelCalls?: number;
   modelEstimateUsd?: number;
   cacheDiscountUsd?: number;
   error?: string;
@@ -35,7 +36,9 @@ export function estimateTokens(
   cached: number,
   writes = 0,
 ) {
-  const rate = rates[model];
+  const rate =
+    rates[model] ||
+    rates[Object.keys(rates).find((k) => model.startsWith(k + "-20")) || ""];
   if (
     !rate ||
     ![input, output, cached, writes].every(Number.isFinite) ||
@@ -106,7 +109,9 @@ async function monitor(r: Run) {
       rows.flatMap((row) =>
         row.type === "model.message"
           ? (row.tool_calls || [])
-              .filter((c: any) => c.function?.name === "create_video")
+              .filter((c: any) =>
+                ["create_video", "render_design"].includes(c.function?.name),
+              )
               .map((c: any) => c.id)
           : [],
       ),
@@ -116,26 +121,56 @@ async function monitor(r: Run) {
         continue;
       try {
         const p = JSON.parse(row.content);
-        if (p.id && p.plan && p.projectUrl && !r.projectIds.includes(p.id))
+        if (p.id && p.projectUrl && !r.projectIds.includes(p.id))
           r.projectIds.push(p.id);
       } catch {}
     }
     // The aggregate already includes cached and reasoning tokens: never add them again.
-    r.metrics = turn.state.metrics;
+    const reviews = rows
+      .filter((row) => row.type === "tool.response")
+      .flatMap((row) => {
+        try {
+          const v = JSON.parse(row.content).visionReview;
+          return v?.usage ? [v] : [];
+        } catch {
+          return [];
+        }
+      });
+    r.metrics = { ...turn.state.metrics };
+    r.visionModelCalls = reviews.length;
+    for (const review of reviews) {
+      const u = review.usage,
+        m = r.metrics!;
+      m.total_input_tokens = (m.total_input_tokens || 0) + u.input_tokens;
+      m.total_output_tokens = (m.total_output_tokens || 0) + u.output_tokens;
+      m.total_tokens = (m.total_tokens || 0) + u.total_tokens;
+      m.total_cache_read_tokens =
+        (m.total_cache_read_tokens || 0) +
+        (u.input_tokens_details?.cached_tokens || 0);
+      m.total_cache_write_tokens =
+        (m.total_cache_write_tokens || 0) +
+        (u.input_tokens_details?.cache_write_tokens || 0);
+      m.total_reasoning_tokens =
+        (m.total_reasoning_tokens || 0) +
+        (u.output_tokens_details?.reasoning_tokens || 0);
+    }
     const messages = rows.filter(
       (row: any) => row.type === "model.message" && row.usage,
     );
-    r.modelCalls = messages.length;
+    r.modelCalls = messages.length + reviews.length;
     const m = r.metrics;
     const complete =
       m &&
       messages.reduce(
         (n: number, row: any) => n + row.usage.input_tokens,
         0,
-      ) === m.total_input_tokens;
+      ) === turn.state.metrics?.total_input_tokens;
     // Unknown subagent models and long context need a different rate card.
     const eligible =
       complete &&
+      reviews.every(
+        (v) => v.model.startsWith(r.model) && v.usage.input_tokens < 128000,
+      ) &&
       messages.every(
         (row: any) =>
           row.thread_id === "main" && row.usage.input_tokens < 128000,
@@ -185,27 +220,66 @@ export function projectUsage(p: Project) {
         ? (p.scenes!.reduce((n, s) => n + s.duration - 0.25, 0) / 60) * 0.015
         : undefined
     : undefined;
+  const finalReview = p.visualReview?.usage;
+  const extraPrice = finalReview
+    ? estimateTokens(
+        p.visualReview!.model,
+        finalReview.input_tokens,
+        finalReview.output_tokens,
+        finalReview.input_tokens_details?.cached_tokens || 0,
+        finalReview.input_tokens_details?.cache_write_tokens || 0,
+      )
+    : undefined;
+  const metrics = run?.metrics ? { ...run.metrics } : undefined;
+  if (metrics && finalReview) {
+    metrics.total_input_tokens += finalReview.input_tokens;
+    metrics.total_output_tokens += finalReview.output_tokens;
+    metrics.total_tokens += finalReview.total_tokens;
+    metrics.total_cache_read_tokens =
+      (metrics.total_cache_read_tokens || 0) +
+      (finalReview.input_tokens_details?.cached_tokens || 0);
+    metrics.total_cache_write_tokens =
+      (metrics.total_cache_write_tokens || 0) +
+      (finalReview.input_tokens_details?.cache_write_tokens || 0);
+    metrics.total_reasoning_tokens =
+      (metrics.total_reasoning_tokens || 0) +
+      (finalReview.output_tokens_details?.reasoning_tokens || 0);
+  }
+  const modelEstimateUsd =
+    run?.modelEstimateUsd !== undefined && (!finalReview || extraPrice)
+      ? run.modelEstimateUsd + (extraPrice?.usd || 0)
+      : undefined;
   const shared = !!run && run.projectIds.length > 1;
   return {
     ...run,
+    metrics,
+    modelEstimateUsd,
+    modelCalls: (run?.modelCalls || 0) + (finalReview ? 1 : 0),
+    visionModelCalls: (run?.visionModelCalls || 0) + (finalReview ? 1 : 0),
+    cacheDiscountUsd:
+      run?.cacheDiscountUsd !== undefined
+        ? run.cacheDiscountUsd + (extraPrice?.cacheDiscountUsd || 0)
+        : undefined,
     audioEstimateUsd,
     audioBasis: p.plan.presenterAssetId
       ? "Whisper import allocation; reused recording is not billed again on revisions"
       : "TTS duration estimate, not measured audio tokens",
     estimatedUsd:
       !shared &&
-      run?.modelEstimateUsd !== undefined &&
+      modelEstimateUsd !== undefined &&
       audioEstimateUsd !== undefined
-        ? run.modelEstimateUsd + audioEstimateUsd
+        ? modelEstimateUsd + audioEstimateUsd
         : undefined,
     sharedTurn: shared,
     pricingDate: "2026-09-26",
     pricingSource: "https://developers.openai.com/api/docs/pricing",
     exclusions:
       "Bundled image creation, local compute, failed/retried API attempts and account-specific discounts. No TrueFoundry savings benchmark yet.",
-    imageAsset: p.plan.scenes.some((s) => ["web", "photo"].includes(s.visual))
-      ? "Reused bundled AI photo; no per-video image generation call"
-      : undefined,
+    imageAsset:
+      p.plan.motion?.html.includes("cafe.png") ||
+      p.plan.scenes.some((s) => ["web", "photo"].includes(s.visual))
+        ? "Reused bundled AI photo; no per-video image generation call"
+        : undefined,
     renderingModelCalls: 0,
   };
 }

@@ -1,4 +1,5 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+if (process.env.YAP_RENDER_WORKER !== "1") dotenv.config({ quiet: true });
 import path from "node:path";
 export const config = {
   root: process.cwd(),

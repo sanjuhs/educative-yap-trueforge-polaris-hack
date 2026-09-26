@@ -45,8 +45,15 @@
             </select>
             <div id="presenter-inputs" hidden>
               <p class="muted">
-                Visuals above. You below. Your voice stays yours.
+                Your voice, inside a scene designed for your story.
               </p>
+              <label for="presenter-mode">Presenter background</label
+              ><select id="presenter-mode">
+                <option value="cutout">
+                  Remove background · Me over the visuals
+                </option>
+                <option value="split">Keep background · Split screen</option>
+              </select>
               <label for="presenter-video">Your video</label
               ><input id="presenter-video" type="file" accept="video/*" />
               <label for="presenter-voice">Separate voiceover (optional)</label
@@ -54,8 +61,9 @@
               <p class="muted">
                 3–60 seconds · up to 250 MB per file. A separate voiceover
                 replaces the video's audio and must already be aligned to it.
-                Audio is sent to OpenAI for transcription; your video stays
-                local.
+                Background removal runs locally. OpenAI receives audio for
+                transcription and still frames for AI quality review. Your full
+                video stays on this computer.
               </p>
               <div id="upload-status" class="muted" role="status"></div>
             </div>

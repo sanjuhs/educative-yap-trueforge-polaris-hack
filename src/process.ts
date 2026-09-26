@@ -71,3 +71,10 @@ export async function probe(file: string) {
     ]),
   );
 }
+
+export function rendererEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, YAP_RENDER_WORKER: "1" };
+  for (const key of Object.keys(env))
+    if (/KEY|TOKEN|SECRET|PASSWORD/.test(key)) delete env[key];
+  return env;
+}

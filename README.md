@@ -4,7 +4,8 @@ Turn a topic into a short, narrated educational video on your computer.
 Built for the TrueForge hackathon at Polaris School of Technology.
 
 **Working first version:** a local studio, a configured TrueForge agent, and a
-HyperFrames rendering worker. Give it a topic, watch the render progress, then
+custom animation worker. Astra writes the animation source, reviews preview frames,
+and can revise the entire design. Give it a topic, watch the render progress, then
 play or download a 1080 × 1920 MP4. Follow up in the same chat to make a new version.
 
 ## Run locally
@@ -15,6 +16,7 @@ On macOS, install FFmpeg with `brew install ffmpeg`; on Ubuntu, use
 
 ```sh
 npm ci
+npx playwright install chromium
 cp example.env .env
 # Edit .env: replace sk-your-key-here with your real OpenAI API key.
 npm start
@@ -25,8 +27,8 @@ TrueForge's full agent interface. The launcher starts both services, connects th
 OpenAI provider, registers the video MCP tools, and creates the `educative-yap`
 agent. It uses a separate project-local TrueForge database.
 
-HyperFrames downloads its rendering browser on the first render. To do that
-before your demo, run `npx hyperframes browser ensure`. Rendering is local;
+New videos render in isolated Chromium. The earlier HyperFrames renderer remains
+for existing projects. Rendering and background removal are local;
 planning and AI voice generation use your OpenAI account and incur API usage.
 The studio uses Google Fonts, with system-font fallbacks; rendered videos use
 local system fonts and bundled GSAP, without external asset requests.
@@ -48,7 +50,8 @@ video tools.
 ## What works
 
 - Topic → script and storyboard via the real TrueForge agent loop.
-- Five visual templates: orbit diagrams, comparisons, steps, bars, and statements.
+- Original HTML/CSS/SVG/Canvas animation written by Astra, with preview, repair and vision critique.
+- Background-removed presenter overlays, plus an optional original-background split screen.
 - OpenAI narration, phrase captions, transitions, and an original synthesized music bed.
 - One-at-a-time render queue, persistent project history, progress, playback, and download.
 - Chat revisions; each version keeps its editable HTML, storyboard, and audio on disk.
@@ -57,48 +60,54 @@ video tools.
 ## Use your own video and voice
 
 Choose **Me + explainer visuals · My voice** in the studio, then upload your
-video. The upper 1080 × 1080 panel shows timed explainer visuals and captions;
-the lower 1080 × 840 panel keeps your video, fitted without cropping. The original
-voice is preserved; this mode does not generate AI narration.
+video. Choose **Remove background · Me over the visuals** for a presenter cutout
+on an original animated background, or **Keep background · Split screen** for
+the source video below the visuals. The original voice is preserved; this mode
+does not generate AI narration. Apple Vision is preferred on macOS; local
+MediaPipe provides a portable fallback. Use **Revise this video** to reuse the
+recording and let Astra change its placement or rewrite the entire animation.
 
 An optional separate voiceover replaces the video's audio. It must already
 start in sync with the video and match its duration within 0.75 seconds. Automatic
 lip-sync, offset correction, and retiming are not included. Uploads support
 3–60 second recordings, up to 250 MB per file; FFmpeg checks the actual media.
 
-Your video stays local. Audio is sent to OpenAI for timestamped transcription,
+Your full video stays local. Audio is sent to OpenAI for timestamped transcription;
+selected preview stills are sent for AI visual critique,
 and the transcript is given to TrueForge to plan scene changes. Presenter
 captions follow transcription word timestamps, which may need correction for
 unclear speech. Animated explainers still use approximate phrase timing.
 
-Visuals use controlled templates. Arbitrary generated scene code and
-Remotion/Manim adapters are future iterations. Outputs are limited to 60 seconds.
+Visuals are original generated scene code, executed in a restricted browser.
+See [the freeform director](docs/freeform-director.md) for the authoring contract,
+local segmentation, setup and limitations. Outputs are limited to 60 seconds.
 
 ## Visual direction and per-video costs
 
 The director now defaults to **GPT-6 Astra with high reasoning**, orchestrated by
-TrueForge. HTML/CSS explainers can use animated browser demonstrations, a bundled
-photographic asset, and multiple visual changes within each scene. The studio
+TrueForge. The model writes a complete custom animation and can revise its source
+after preview feedback. The studio
 shows measured token usage and estimated API cost after each generation turn.
 
 See [visuals and cost accounting](docs/visuals-and-costs.md) for supported scenes,
 pricing assumptions, cache-write accounting, and exclusions. Rendering itself
 uses no further model calls. HDR iPhone uploads require an FFmpeg build with
-`zscale` and `tonemap` filters (the Homebrew build used here supports both).
+`zscale`, `tonemap`, and `subtitles` filters (the Homebrew build used here supports all three).
 
 ## Configuration
 
 Both `example.env` and `.env.example` contain placeholders only. `.env`, local
 TrueForge credentials, generated media, and logs are excluded from Git.
 
-| Variable                  | Default           | Purpose                                 |
-| ------------------------- | ----------------- | --------------------------------------- |
-| `OPENAI_API_KEY`          | required          | TrueForge planning and voice generation |
-| `OPENAI_MODEL`            | `gpt-6-astra`     | Director model; must support tool calls |
-| `OPENAI_REASONING_EFFORT` | `high`            | Director reasoning effort               |
-| `OPENAI_TTS_MODEL`        | `gpt-4o-mini-tts` | Narration model                         |
-| `STUDIO_PORT`             | `8789`            | Studio and local MCP endpoint           |
-| `PORT`                    | `8790`            | TrueForge interface and API             |
+| Variable                  | Default           | Purpose                                           |
+| ------------------------- | ----------------- | ------------------------------------------------- |
+| `OPENAI_API_KEY`          | required          | TrueForge planning and voice generation           |
+| `OPENAI_MODEL`            | `gpt-6-astra`     | Director model; must support tool calls           |
+| `OPENAI_REASONING_EFFORT` | `high`            | Director reasoning effort                         |
+| `CUTOUT_BACKEND`          | `auto`            | Prefer Apple Vision on macOS; otherwise MediaPipe |
+| `OPENAI_TTS_MODEL`        | `gpt-4o-mini-tts` | Narration model                                   |
+| `STUDIO_PORT`             | `8789`            | Studio and local MCP endpoint                     |
+| `PORT`                    | `8790`            | TrueForge interface and API                       |
 
 Restart after changing configuration. The launcher updates this project's
 provider key, model, agent instructions, and MCP endpoint automatically. Both

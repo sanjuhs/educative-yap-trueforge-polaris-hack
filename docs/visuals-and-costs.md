@@ -4,11 +4,15 @@ The director defaults to **gpt-6-astra with high reasoning**, called by TrueForg
 
 The director chooses scenes and timings. GSAP + HyperFrames execute deterministic animations and FFmpeg combines the presenter's video and original audio. Rendering and UI status polling use no additional model calls. This is an architectural property, not a measured token-savings comparison with a competing pipeline.
 
-## HTML/CSS demonstration
+## Current authoring path
+
+New videos use an original HTML/CSS/JavaScript composition written by Astra, with a metered vision review and optional local presenter background removal. See [the freeform director](freeform-director.md). The named scene types below describe the earlier renderer, retained for existing projects only.
+
+## Earlier HTML/CSS demonstration
 
 The `web` scene has seven stages: technology overview, markup, rendered page, CSS styling, selector targeting, stylesheet linking, and delivery to a browser. The same fictional café page and bundled photographic asset recur throughout. Multi-step animations show changes in the object being explained, with short headlines and timed captions. `visualIntent` records why a scene was selected.
 
-This first iteration adds a topic-specific visual vocabulary. It does not generate arbitrary motion design or custom footage for every topic. Other topics retain the original diagram styles and can use the café image only when relevant. Add new visual modules as sample explainers reveal what is needed.
+That earlier iteration added a topic-specific visual vocabulary. It does not generate arbitrary motion design or custom footage for every topic. Other topics retain the original diagram styles and can use the café image only when relevant. Add new visual modules as sample explainers reveal what is needed.
 
 Presenter clips retain their original duration and audio. HDR iPhone footage is tone-mapped to SDR. Portrait clips use a modest upper-center zoom over blurred sides in the lower panel; landscape clips fit. This crop is a heuristic, not face tracking. Source files and personal recordings stay in ignored `.data/`.
 
