@@ -537,3 +537,60 @@ footer {
     gap: 0;
   }
 }
+
+.creative-controls {
+  margin: 0 0 22px;
+  padding: 16px;
+  border: 1px solid #d9d9ce;
+  border-radius: 12px;
+}
+.creative-controls summary,
+.shot-plan summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.creative-controls label {
+  margin-top: 16px;
+}
+.creative-controls output {
+  float: right;
+  color: #657f44;
+}
+.creative-controls input[type="range"] {
+  width: 100%;
+  padding: 0;
+  accent-color: #6a854b;
+}
+.creative-controls textarea {
+  min-height: 88px;
+  font-size: 14px;
+}
+.mix-endpoints {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: #697565;
+}
+.shot-plan {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.shot-plan ol {
+  padding-left: 20px;
+}
+.shot-plan li {
+  margin: 12px 0;
+}
+.shot-plan p {
+  color: #697565;
+}
+.shot-kind {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border: 1px solid #d9d9ce;
+  border-radius: 5px;
+  font-size: 11px;
+}

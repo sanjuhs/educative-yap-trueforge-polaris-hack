@@ -1,3 +1,4 @@
+import { creativeBriefSchema, creativeBriefMessage } from "./creative-brief.js";
 import {
   defaultGeneration,
   generationSchema,
@@ -225,6 +226,7 @@ export async function startServer() {
       .object({
         message: z.string().min(1).max(6000),
         generation: generationSchema.optional(),
+        creativeBrief: creativeBriefSchema.optional(),
         presenterAssetId: z.string().uuid().optional(),
         revisionProjectId: z.string().uuid().optional(),
         presenterMode: z.enum(["cutout", "split"]).optional(),
@@ -239,6 +241,7 @@ export async function startServer() {
       : undefined;
     const requestMessage =
       input.message +
+      (input.creativeBrief ? creativeBriefMessage(input.creativeBrief) : "") +
       (input.revisionProjectId
         ? `\nRevise saved project ${getProject(input.revisionProjectId).id}. First get_video_project to inspect the existing source. You may change its entire motion design as requested.`
         : "");

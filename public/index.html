@@ -80,6 +80,67 @@
                 >
               </details>
             </div>
+            <details class="creative-controls" open>
+              <summary>Visual direction</summary>
+              <label for="web-image-share"
+                >Internet photos
+                <output id="web-image-label" for="web-image-share"
+                  >40%</output
+                ></label
+              >
+              <input
+                id="web-image-share"
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value="40"
+              />
+              <div class="mix-endpoints">
+                <span>Original diagrams & animations</span
+                ><span>Photo-led visuals</span>
+              </div>
+              <p class="muted">
+                Approximate screen-time target, not a fixed template. Photos can
+                carry animated overlays. Relevance comes first; moving footage
+                is a separate upcoming feature.
+              </p>
+              <div class="model-controls">
+                <div>
+                  <label for="explanation-type">Explanation type</label
+                  ><select id="explanation-type">
+                    <option value="auto">Let the director choose</option>
+                    <option value="mechanism">How it works</option>
+                    <option value="comparison">Compare things</option>
+                    <option value="timeline">Tell a story over time</option>
+                    <option value="walkthrough">Show the steps</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="visual-pacing">Pacing</label
+                  ><select id="visual-pacing">
+                    <option value="calm">Calm · let shots breathe</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="brisk">Brisk · frequent changes</option>
+                  </select>
+                </div>
+              </div>
+              <label for="text-density">On-screen text</label
+              ><select id="text-density">
+                <option value="minimal">As little as possible</option>
+                <option value="labels" selected>
+                  Short labels & headlines
+                </option>
+                <option value="balanced">More explanation when useful</option>
+              </select>
+              <label for="visual-notes">Visual notes / comments</label
+              ><textarea
+                id="visual-notes"
+                maxlength="1500"
+                rows="3"
+                placeholder="Use actual browser interfaces, animate the CSS changes, avoid generic people typing. Keep labels short."
+              ></textarea>
+            </details>
             <div id="presenter-inputs" hidden>
               <p class="muted">
                 Your voice, inside a scene designed for your story.
@@ -158,6 +219,10 @@
           </div>
           <div id="video-actions"></div>
           <div id="usage-panel" class="usage-panel" aria-live="polite"></div>
+          <details id="shot-plan" class="shot-plan" hidden>
+            <summary>Shot plan & visual types</summary>
+            <div id="shot-plan-content"></div>
+          </details>
         </aside>
       </section>
       <section class="library">

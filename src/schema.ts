@@ -1,6 +1,8 @@
+import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { motionSchema, placementSchema } from "./motion-schema.js";
 import { z } from "zod";
 export const sceneSchema = z.object({
+  shotKind: shotKindSchema.optional(),
   startSeconds: z
     .number()
     .min(0)
@@ -54,6 +56,7 @@ export const sceneSchema = z.object({
 });
 export const planSchema = z
   .object({
+    creativeBrief: creativeBriefSchema.optional(),
     motion: motionSchema.optional(),
     presenterMode: z.enum(["cutout", "split"]).optional(),
     presenterPlacement: placementSchema.optional(),

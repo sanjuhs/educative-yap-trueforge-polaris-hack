@@ -1,3 +1,4 @@
+import { creativeBriefSchema, shotKindSchema } from "./creative-brief.js";
 import { defaultGeneration, type GenerationSettings } from "./model-options.js";
 import { reviewFrames } from "./vision-review.js";
 import { z } from "zod";
@@ -11,6 +12,11 @@ import { run, rendererEnv } from "./process.js";
 
 import { motionSchema, placementSchema } from "./motion-schema.js";
 export const authoredInputSchema = z.object({
+  creativeBrief: creativeBriefSchema
+    .optional()
+    .describe(
+      "Copy the supplied user creative brief; its mix and pacing are editorial targets, not fixed templates.",
+    ),
   title: z.string().min(1).max(90),
   summary: z.string().min(1).max(400),
   presenterAssetId: z.string().uuid().optional(),
@@ -34,6 +40,11 @@ export const authoredInputSchema = z.object({
         title: z.string().min(1).max(65),
         narration: z.string().min(1).max(450),
         visualIntent: z.string().max(400).optional(),
+        shotKind: shotKindSchema
+          .optional()
+          .describe(
+            "Classify the visual medium actually authored for this scene.",
+          ),
       }),
     )
     .min(1)

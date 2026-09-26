@@ -37,6 +37,7 @@ function activity(text, error = false) {
 function show(p) {
   selectedId = p.id;
   showUsage(p.usage);
+  showShotPlan(p);
   const signature = `${p.id}:${p.status}:${p.progress}`;
   if (signature === lastPreview) return;
   lastPreview = signature;
@@ -54,6 +55,7 @@ function show(p) {
         : "narrated";
       $("#video-mode").dispatchEvent(new Event("change"));
       revisionProjectId = p.id;
+      if (p.plan.creativeBrief) applyCreativeBrief(p.plan.creativeBrief);
       presenterAssetId = p.plan.presenterAssetId;
       if (presenterAssetId) {
         $("#presenter-mode").value = p.plan.presenterMode || "cutout";
@@ -119,6 +121,11 @@ async function tick() {
     "#presenter-mode",
     "#director-model",
     "#reasoning-effort",
+    "#web-image-share",
+    "#explanation-type",
+    "#visual-pacing",
+    "#text-density",
+    "#visual-notes",
   ])
     $(id).disabled =
       busy ||
@@ -171,6 +178,7 @@ $("#prompt-form").onsubmit = async (event) => {
   event.preventDefault();
   if (busy || !generationOptions) return;
   const generation = selectedGeneration();
+  const creativeBrief = selectedCreativeBrief();
   const presenterMode = $("#video-mode").value === "presenter";
   const message =
     $("#prompt").value.trim() ||
@@ -208,6 +216,7 @@ $("#prompt-form").onsubmit = async (event) => {
       message,
       sessionId,
       generation,
+      creativeBrief,
       ...(revisionProjectId ? { revisionProjectId } : {}),
       ...(presenterMode
         ? { presenterAssetId, presenterMode: $("#presenter-mode").value }
@@ -341,3 +350,57 @@ function changeGeneration() {
 }
 $("#director-model").onchange = changeGeneration;
 $("#reasoning-effort").onchange = changeGeneration;
+
+function selectedCreativeBrief() {
+  return {
+    webImagePercent: Number($("#web-image-share").value),
+    explanationType: $("#explanation-type").value,
+    pacing: $("#visual-pacing").value,
+    textDensity: $("#text-density").value,
+    notes: $("#visual-notes").value.trim(),
+  };
+}
+function saveCreativeBrief() {
+  const brief = selectedCreativeBrief();
+  $("#web-image-label").textContent = `${brief.webImagePercent}%`;
+  localStorage.setItem("yap-creative-brief", JSON.stringify(brief));
+}
+function applyCreativeBrief(brief) {
+  if (!brief || typeof brief !== "object") return;
+  if (Number.isFinite(brief.webImagePercent))
+    $("#web-image-share").value = String(
+      Math.max(0, Math.min(100, brief.webImagePercent)),
+    );
+  for (const [id, key] of [
+    ["#explanation-type", "explanationType"],
+    ["#visual-pacing", "pacing"],
+    ["#text-density", "textDensity"],
+  ]) {
+    if ([...$(id).options].some((o) => o.value === brief[key]))
+      $(id).value = brief[key];
+  }
+  if (typeof brief.notes === "string")
+    $("#visual-notes").value = brief.notes.slice(0, 1500);
+  saveCreativeBrief();
+}
+for (const id of [
+  "#web-image-share",
+  "#explanation-type",
+  "#visual-pacing",
+  "#text-density",
+  "#visual-notes",
+])
+  $(id).addEventListener("input", saveCreativeBrief);
+try {
+  applyCreativeBrief(JSON.parse(localStorage.getItem("yap-creative-brief")));
+} catch {}
+function showShotPlan(p) {
+  const scenes = p.plan.scenes || [];
+  $("#shot-plan").hidden = !scenes.length;
+  const brief = p.plan.creativeBrief;
+  $("#shot-plan-content").innerHTML =
+    (brief
+      ? `<p>Requested direction: ${brief.webImagePercent}% photo-led screen time · ${safe(brief.explanationType)} · ${safe(brief.pacing)} pacing. Mix is a target, not a measured result.</p>`
+      : "") +
+    `<ol>${scenes.map((s) => `<li><strong>${safe(s.title)}</strong>${s.shotKind ? `<span class="shot-kind">${safe(s.shotKind)}</span>` : ""}<p>${safe(s.visualIntent || "")}</p></li>`).join("")}</ol>`;
+}
