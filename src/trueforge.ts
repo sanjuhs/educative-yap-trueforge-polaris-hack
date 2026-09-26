@@ -1,3 +1,13 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {
+  defaultGeneration,
+  generationSchema,
+  modelSchema,
+  reasoningSchema,
+  profileName,
+  type GenerationSettings,
+} from "./model-options.js";
 import { config, forgeUrl, studioUrl } from "./config.js";
 export async function forgeRequest(
   endpoint: string,
@@ -31,21 +41,17 @@ PRESENTER MODE: Preserve the recording and original voice; never synthesize repl
 
 AI VOICE MODE: Around 65–85 words for 20–40 seconds, maximum135words/60seconds. Use 3–8 meaningful beats. Supply narration per scene; original drawings illustrate it. Avoid invented facts or statistics.
 
-QUALITY LOOP: Call preview_design with the complete original source. Use the visionReview critique returned with the preview; it comes from a real Astra vision call looking at these frames, because TrueForge may omit image blocks. Inspect the critique for hierarchy, clipping, clarity, subject-specific visuals and presenter space. If errors or poor visuals, fix source and preview again (up to 3 repairs). If the images pass, call render_design. Keep expensive model work bounded. After render_design return its project link immediately; the studio tracks the local job without repeated model polling. Do not claim completion before its status is complete. For revisions get_video_project, retain original recording and liked elements, then author a revised complete design and preview. Earlier projects are preserved. Use bounded TrueForge subagents only if independent critique materially helps a complex request; the parent alone renders. No web-search tool is available; qualify uncertain claims.`;
+QUALITY LOOP: Call preview_design with the complete original source. Use the visionReview critique returned with the preview; it comes from a real vision call using your selected model looking at these frames, because TrueForge may omit image blocks. Inspect the critique for hierarchy, clipping, clarity, subject-specific visuals and presenter space. If errors or poor visuals, fix source and preview again (up to 3 repairs). If the images pass, call render_design. Keep expensive model work bounded. After render_design return its project link immediately; the studio tracks the local job without repeated model polling. Do not claim completion before its status is complete. For revisions get_video_project, retain original recording and liked elements, then author a revised complete design and preview. Earlier projects are preserved. Use the selected director and reviewer; additional subagents are disabled to keep model selection and cost accounting predictable. No web-search tool is available; qualify uncertain claims.`;
 export async function configureForge() {
   const providers = await forgeRequest("/settings/model-providers");
   const manifest = {
     type: "openai",
     auth: { api_key: config.apiKey },
-    models: [
-      {
-        name: config.model.replaceAll(".", "-"),
-        model_id: config.model,
-        properties: {
-          reasoning_efforts: ["low", "medium", "high", "xhigh", "max"],
-        },
-      },
-    ],
+    models: modelSchema.options.map((model) => ({
+      name: model,
+      model_id: model,
+      properties: { reasoning_efforts: reasoningSchema.options },
+    })),
   };
   // This app owns an isolated TrueForge database. Preserve other configured models on restarts.
   const existing = (providers.data || []).find(
@@ -58,7 +64,7 @@ export async function configureForge() {
     await forgeRequest("/settings/model-providers", "POST", { manifest });
   else {
     const models = existing.manifest.models.filter(
-      (m: any) => m.name !== manifest.models[0].name,
+      (m: any) => !manifest.models.some((owned) => owned.name === m.name),
     );
     await forgeRequest("/settings/model-providers", "PUT", {
       manifest: {
@@ -68,54 +74,88 @@ export async function configureForge() {
       },
     });
   }
+  await ensureGenerationAgent(defaultGeneration());
+}
+
+const configured = new Map<string, Promise<string>>();
+// Profiles never change models while a session is running. Concurrent requests share setup only.
+export function ensureGenerationAgent(
+  settings: GenerationSettings,
+): Promise<string> {
+  const s = generationSchema.parse(settings);
+  const name = profileName(s);
+  if (!configured.has(name)) {
+    const pending = configureProfile(name, s).catch((error) => {
+      configured.delete(name);
+      throw error;
+    });
+    configured.set(name, pending);
+  }
+  return configured.get(name)!;
+}
+async function configureProfile(name: string, settings: GenerationSettings) {
   const servers = await forgeRequest("/settings/mcp-servers");
   const hasServer = (servers.data || []).some(
-    (s: any) =>
-      s.name === "educative-video" || s.manifest?.name === "educative-video",
+    (s: any) => s.name === name || s.manifest?.name === name,
   );
+  const query = new URLSearchParams(settings);
   await forgeRequest("/settings/mcp-servers", hasServer ? "PUT" : "POST", {
     manifest: {
       type: "remote",
-      name: "educative-video",
+      name,
       description:
-        "Create local narrated explainer videos, inspect projects, and track render jobs.",
-      url: `${studioUrl}/mcp`,
+        "Original video design, web assets, local rendering and visual review.",
+      url: `${studioUrl}/mcp?${query}`,
     },
   });
   const agents = await forgeRequest("/agents");
   const spec = {
     model: {
-      name: `openai/${config.model.replaceAll(".", "-")}`,
-      params: { reasoning_effort: config.reasoning },
+      name: `openai/${settings.model}`,
+      params: { reasoning_effort: settings.reasoning },
     },
     instructions,
-    mcp_servers: [
-      {
-        name: "educative-video",
-        preload: true,
-        require_approval_for_tools: [],
-      },
-    ],
+    mcp_servers: [{ name, preload: true, require_approval_for_tools: [] }],
     config: {
-      dynamic_sub_agents: { enabled: true },
+      dynamic_sub_agents: { enabled: false },
       sandbox: { enabled: false },
       generative_ui: { enabled: false },
       ask_user_questions: { enabled: false },
       iteration_limit: 20,
     },
   };
-  const agent = agents.data.find((a: any) => a.name === agentName);
+  const agent = agents.data.find((a: any) => a.name === name);
+  const description = `Video director and reviewer: ${settings.model}, ${settings.reasoning} reasoning.`;
   if (!agent)
     await forgeRequest("/agents", "POST", {
-      name: agentName,
-      description:
-        "Turn a topic into a narrated vertical explainer with local video tools.",
+      name,
+      description,
       manifest: spec,
     });
   else
     await forgeRequest(`/agents/${agent.id}`, "PUT", {
-      description:
-        "Turn a topic into a narrated vertical explainer with local video tools.",
+      description,
       manifest: spec,
     });
+  return name;
+}
+
+export async function generationSession(
+  settings: GenerationSettings,
+  previousId?: string,
+) {
+  const name = await ensureGenerationAgent(settings);
+  const folder = path.join(config.data, "session-profiles");
+  await fs.mkdir(folder, { recursive: true });
+  if (previousId && /^[a-zA-Z0-9_-]{1,64}$/.test(previousId)) {
+    try {
+      if ((await fs.readFile(path.join(folder, previousId), "utf8")) === name)
+        return { id: previousId, reset: false };
+    } catch (error: any) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  const session = await forgeRequest("/sessions", "POST", { agent: { name } });
+  await fs.writeFile(path.join(folder, session.data.id), name);
+  return { id: session.data.id as string, reset: !!previousId };
 }

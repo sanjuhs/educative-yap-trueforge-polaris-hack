@@ -4,15 +4,11 @@ import { config } from "./config.js";
 import { forgeRequest } from "./trueforge.js";
 import type { Project } from "./schema.js";
 
-// Standard direct OpenAI rates, USD / million tokens, checked 2026-09-26.
-// https://developers.openai.com/api/docs/pricing
-const rates: Record<
-  string,
-  { input: number; cached: number; output: number; write?: number }
-> = {
-  "gpt-6-astra": { input: 10, cached: 1, output: 50, write: 12.5 },
-  "gpt-5.4": { input: 2.5, cached: 0.25, output: 15 },
-};
+import {
+  tokenRates as rates,
+  defaultGeneration,
+  type GenerationSettings,
+} from "./model-options.js";
 type Run = {
   sessionId: string;
   turnId: string;
@@ -71,12 +67,16 @@ async function persist(r: Run) {
     JSON.stringify(r, null, 2),
   );
 }
-export async function watchUsage(sessionId: string, turnId: string) {
+export async function watchUsage(
+  sessionId: string,
+  turnId: string,
+  settings: GenerationSettings = defaultGeneration(),
+) {
   const r = runs.get(turnId) || {
     sessionId,
     turnId,
-    model: config.model,
-    reasoning: config.reasoning,
+    model: settings.model,
+    reasoning: settings.reasoning,
     status: "pending",
     projectIds: [],
   };

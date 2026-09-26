@@ -237,7 +237,7 @@ export async function renderProject(p: Project) {
         captions: presenter && p.plan.presenterMode !== "split" ? [] : captions,
       }),
     );
-    p.progress = "Rendering Astra's original animation";
+    p.progress = "Rendering your director’s original animation";
     await save(p);
     await run(
       process.execPath,

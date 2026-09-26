@@ -139,3 +139,7 @@ Original code: [MIT](LICENSE). Dependencies retain their own licenses:
 [TrueForge](https://github.com/truefoundry/trueforge) is MIT,
 [HyperFrames](https://github.com/heygen-com/hyperframes) is Apache-2.0, and GSAP
 has its own license. Remotion is not installed in this first version.
+
+## Choosing a model and estimating cost
+
+Choose Luna, Sol or Astra and a reasoning effort in the studio. The selection applies to both editing and visual review. The studio shows an illustrative 30-second budget before generation and measured token usage afterward. See [model options and cost accounting](docs/model-costs.md) for assumptions, rates and comparisons.

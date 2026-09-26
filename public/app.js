@@ -6,7 +6,7 @@ let sessionId = sessionStorage.getItem("yap-session") || undefined,
   busy = !!activeTurn,
   lastPreview = "",
   latestId;
-let presenterAssetId, revisionProjectId;
+let presenterAssetId, revisionProjectId, generationOptions;
 const safe = (s) =>
   String(s).replace(
     /[&<>"']/g,
@@ -64,7 +64,7 @@ function show(p) {
         "What should change? Layout, motion, visual metaphor, presenter placement…";
       $("#prompt").focus();
       activity(
-        "Tell Astra how to revise this video. It can rewrite the entire animation.",
+        "Tell your selected director how to revise this video. It can rewrite the entire animation.",
       );
     };
   } else {
@@ -117,16 +117,20 @@ async function tick() {
     "#presenter-video",
     "#presenter-voice",
     "#presenter-mode",
+    "#director-model",
+    "#reasoning-effort",
   ])
-    $(id).disabled = busy;
+    $(id).disabled =
+      busy ||
+      (!generationOptions &&
+        ["#director-model", "#reasoning-effort"].includes(id));
   try {
     const health = await api("/api/health");
     $("#connection").textContent = health.ready
       ? "● TRUEFORGE CONNECTED"
       : "STARTING…";
     $("#forge-link").href = health.forgeUrl;
-    $("#model-info").textContent =
-      `${health.model} · ${health.reasoning} reasoning · Original animation through TrueForge`;
+    if (!generationOptions) await loadGenerationOptions();
     projects = await api("/api/projects");
     renderLibrary();
     if (activeTurn) {
@@ -165,7 +169,8 @@ async function tick() {
 }
 $("#prompt-form").onsubmit = async (event) => {
   event.preventDefault();
-  if (busy) return;
+  if (busy || !generationOptions) return;
+  const generation = selectedGeneration();
   const presenterMode = $("#video-mode").value === "presenter";
   const message =
     $("#prompt").value.trim() ||
@@ -202,11 +207,16 @@ $("#prompt-form").onsubmit = async (event) => {
     const result = await api("/api/chat", {
       message,
       sessionId,
+      generation,
       ...(revisionProjectId ? { revisionProjectId } : {}),
       ...(presenterMode
         ? { presenterAssetId, presenterMode: $("#presenter-mode").value }
         : {}),
     });
+    if (result.sessionReset)
+      activity(
+        "Started a fresh session for the selected model. The saved revision source is retained.",
+      );
     sessionId = result.sessionId;
     activeTurn = result.turnId;
     sessionStorage.setItem("yap-session", sessionId);
@@ -249,6 +259,7 @@ $("#video-mode").onchange = () => {
   revisionProjectId = undefined;
   const presenter = $("#video-mode").value === "presenter";
   $("#presenter-inputs").hidden = !presenter;
+  updateBudget();
   $("#prompt").required = !presenter;
   $("#format-hint").textContent = presenter
     ? "9:16 · Your voice · Original motion design"
@@ -266,5 +277,67 @@ function showUsage(u) {
   }
   const m = u.metrics,
     money = (v) => (v === undefined ? "Unavailable" : `$${v.toFixed(4)}`);
-  panel.innerHTML = `<strong>AI cost estimate · ${money(u.estimatedUsd)}</strong><p>${safe(u.model)} · ${safe(u.reasoning)} reasoning</p><dl><dt>Input tokens</dt><dd>${m.total_input_tokens.toLocaleString()}</dd><dt>Output tokens (includes reasoning)</dt><dd>${m.total_output_tokens.toLocaleString()}</dd><dt>Cached input (included above)</dt><dd>${(m.total_cache_read_tokens || 0).toLocaleString()}</dd><dt>Cache writes (included in input)</dt><dd>${(m.total_cache_write_tokens || 0).toLocaleString()}</dd><dt>Reasoning tokens (included above)</dt><dd>${(m.total_reasoning_tokens || 0).toLocaleString()}</dd><dt>Director · ${u.modelCalls} model calls</dt><dd>${money(u.modelEstimateUsd)}</dd><dt>Included vision reviews</dt><dd>${u.visionModelCalls || 0}</dd><dt>Audio estimate</dt><dd>${money(u.audioEstimateUsd)}</dd><dt>Net caching discount (after writes)</dt><dd>${money(u.cacheDiscountUsd)}</dd></dl><p>${safe(u.audioBasis)}. ${safe(u.imageAsset || "")}.</p><p>Rendering and status checks make 0 additional model calls.</p><details><summary>How this estimate works</summary><p>Measured TrueForge turn tokens × standard OpenAI prices, ${safe(u.pricingDate)}. ${u.sharedTurn ? "Director cost is shared across multiple outputs from this turn; total is not allocated." : "Includes this generation turn, not previous revisions."} ${safe(u.error || "")}</p><p>Excludes: ${safe(u.exclusions)}</p><a href="${safe(u.pricingSource)}" target="_blank" rel="noreferrer">Pricing source ↗</a></details>`;
+  panel.innerHTML = `<strong>AI cost estimate · ${money(u.estimatedUsd)}</strong><p>${safe(u.model)} · ${safe(u.reasoning)} reasoning</p><dl><dt>Input tokens</dt><dd>${m.total_input_tokens.toLocaleString()}</dd><dt>Output tokens (includes reasoning)</dt><dd>${m.total_output_tokens.toLocaleString()}</dd><dt>Cached input (included above)</dt><dd>${(m.total_cache_read_tokens || 0).toLocaleString()}</dd><dt>Cache writes (included in input)</dt><dd>${(m.total_cache_write_tokens || 0).toLocaleString()}</dd><dt>Reasoning tokens (included above)</dt><dd>${(m.total_reasoning_tokens || 0).toLocaleString()}</dd><dt>Editing + review · ${u.modelCalls} model calls</dt><dd>${money(u.modelEstimateUsd)}</dd><dt>Included vision reviews</dt><dd>${u.visionModelCalls || 0}</dd><dt>Audio estimate</dt><dd>${money(u.audioEstimateUsd)}</dd><dt>Net caching discount (after writes)</dt><dd>${money(u.cacheDiscountUsd)}</dd></dl><p>${safe(u.audioBasis)}.${u.imageAsset ? " " + safe(u.imageAsset) : ""}</p><p>Rendering and status checks make 0 additional model calls.</p><details><summary>How this estimate works</summary><p>Measured TrueForge turn tokens × standard OpenAI prices, ${safe(u.pricingDate)}. ${u.sharedTurn ? "Director cost is shared across multiple outputs from this turn; total is not allocated." : "Includes this generation turn, not previous revisions."} ${safe(u.error || "")}</p><p>Excludes: ${safe(u.exclusions)}</p><a href="${safe(u.pricingSource)}" target="_blank" rel="noreferrer">Pricing source ↗</a></details>`;
 }
+
+function selectedGeneration() {
+  return {
+    model: $("#director-model").value,
+    reasoning: $("#reasoning-effort").value,
+  };
+}
+async function loadGenerationOptions() {
+  generationOptions = await api("/api/generation-options");
+  let saved;
+  try {
+    saved = JSON.parse(localStorage.getItem("yap-generation"));
+  } catch {}
+  const models = generationOptions.models;
+  const settings =
+    saved &&
+    models.some((m) => m.id === saved.model) &&
+    generationOptions.reasoning.includes(saved.reasoning)
+      ? saved
+      : generationOptions.defaults;
+  $("#director-model").innerHTML = models
+    .map((m) => `<option value="${safe(m.id)}">${safe(m.label)}</option>`)
+    .join("");
+  $("#reasoning-effort").innerHTML = generationOptions.reasoning
+    .map(
+      (e) =>
+        `<option value="${safe(e)}">${safe(e === "xhigh" ? "Extra high" : e === "max" ? "Maximum" : e[0].toUpperCase() + e.slice(1))}</option>`,
+    )
+    .join("");
+  $("#director-model").value = settings.model;
+  $("#reasoning-effort").value = settings.reasoning;
+  $("#director-model").disabled = $("#reasoning-effort").disabled = busy;
+  $("#budget-assumptions").textContent = generationOptions.estimateBasis;
+  updateBudget();
+}
+function updateBudget() {
+  if (!generationOptions) return;
+  const selected = selectedGeneration();
+  const model = generationOptions.models.find((m) => m.id === selected.model);
+  const audio = generationOptions.audio[$("#video-mode").value];
+  const dollars = (n) => `$${n.toFixed(3)}`;
+  $("#budget-estimate").textContent =
+    audio === null
+      ? `30s AI editing budget: ${dollars(model.estimate.low)}–${dollars(model.estimate.high)} + audio (unpriced)`
+      : `30s AI budget: ~${dollars(model.estimate.low + audio)}–${dollars(model.estimate.high + audio)}`;
+  $("#model-info").textContent =
+    `${selected.model} · ${selected.reasoning} reasoning · Original animation through TrueForge`;
+}
+function changeGeneration() {
+  if (busy) return;
+  localStorage.setItem("yap-generation", JSON.stringify(selectedGeneration()));
+  sessionId = undefined;
+  sessionStorage.removeItem("yap-session");
+  $("#chat-log").textContent = "";
+  $("#new-chat").hidden = true;
+  updateBudget();
+  activity(
+    "Model selected. A fresh session keeps its usage separate; use ‘Revise this video’ to carry over an existing design.",
+  );
+}
+$("#director-model").onchange = changeGeneration;
+$("#reasoning-effort").onchange = changeGeneration;

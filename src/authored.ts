@@ -1,3 +1,4 @@
+import { defaultGeneration, type GenerationSettings } from "./model-options.js";
 import { reviewFrames } from "./vision-review.js";
 import { z } from "zod";
 import fs from "node:fs/promises";
@@ -62,7 +63,10 @@ export async function readDesign(id: string): Promise<Plan> {
     ),
   );
 }
-export async function previewDesign(input: AuthoredInput) {
+export async function previewDesign(
+  input: AuthoredInput,
+  settings: GenerationSettings = defaultGeneration(),
+) {
   const plan = authoredPlan(input),
     id = randomUUID(),
     dir = designDir(id);
@@ -101,7 +105,7 @@ export async function previewDesign(input: AuthoredInput) {
   const report = JSON.parse(
     await fs.readFile(path.join(dir, "preview.json"), "utf8"),
   );
-  report.visionReview = await reviewFrames(dir, plan, report.times);
+  report.visionReview = await reviewFrames(dir, plan, report.times, settings);
   await fs.writeFile(path.join(dir, "preview.json"), JSON.stringify(report));
   return { id, dir, report };
 }

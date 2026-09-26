@@ -43,6 +43,43 @@
                 Me + explainer visuals · My voice
               </option>
             </select>
+            <div class="model-controls">
+              <div>
+                <label for="director-model">AI director</label>
+                <select id="director-model" disabled>
+                  <option>Loading models…</option>
+                </select>
+              </div>
+              <div>
+                <label for="reasoning-effort">Reasoning effort</label>
+                <select id="reasoning-effort" disabled>
+                  <option>Loading…</option>
+                </select>
+              </div>
+            </div>
+            <div class="cost-preview" aria-live="polite">
+              <strong id="budget-estimate">Loading cost estimate…</strong>
+              <p>
+                Same model for creative editing and visual review. Internet
+                images + original graphics; no image-generation API calls.
+              </p>
+              <details>
+                <summary>30-second estimate assumptions</summary>
+                <p id="budget-assumptions"></p>
+                <p>
+                  Audio adds ~$0.003 for an imported 30-second recording, or
+                  ~$0.0075 for AI narration. Existing recordings can be reused.
+                  Local rendering is separate from AI cost. Lower reasoning can
+                  reduce tokens, but may need more repairs.
+                </p>
+                <a
+                  href="https://developers.openai.com/api/docs/pricing"
+                  target="_blank"
+                  rel="noreferrer"
+                  >OpenAI pricing ↗</a
+                >
+              </details>
+            </div>
             <div id="presenter-inputs" hidden>
               <p class="muted">
                 Your voice, inside a scene designed for your story.

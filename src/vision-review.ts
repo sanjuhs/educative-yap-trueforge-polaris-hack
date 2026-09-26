@@ -1,9 +1,15 @@
+import { defaultGeneration, type GenerationSettings } from "./model-options.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import OpenAI from "openai";
 import { config } from "./config.js";
 import type { Plan } from "./schema.js";
-export async function reviewFrames(dir: string, plan: Plan, times: number[]) {
+export async function reviewFrames(
+  dir: string,
+  plan: Plan,
+  times: number[],
+  settings: GenerationSettings = defaultGeneration(),
+) {
   const client = new OpenAI({
     apiKey: config.apiKey,
     timeout: 120000,
@@ -26,8 +32,8 @@ export async function reviewFrames(dir: string, plan: Plan, times: number[]) {
       detail: "high",
     });
   const response = await client.responses.create({
-    model: config.model,
-    reasoning: { effort: "high" },
+    model: settings.model,
+    reasoning: { effort: settings.reasoning },
     max_output_tokens: 2000,
     input: [{ role: "user", content }],
   });
@@ -35,6 +41,7 @@ export async function reviewFrames(dir: string, plan: Plan, times: number[]) {
     throw new Error("Vision review returned no critique; retry the preview.");
   return {
     model: response.model,
+    reasoning: settings.reasoning,
     critique: response.output_text,
     usage: response.usage,
     responseId: response.id,
